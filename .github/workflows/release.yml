@@ -1,0 +1,63 @@
+name: Release
+
+# v* 태그를 push 하면 npm pack 결과를 GitHub Release 파일로 올린다.
+# 같은 태그의 Release 가 이미 있으면 gh release create 가 실패한다. 이것이 다시 올리기를 막는다.
+# 이미 있는 Release 에 파일을 덮어쓰는 옵션은 쓰지 않는다.
+# Release 를 지우고 다시 만드는 길은 저장소 설정이 막는다(README 의 지키는 규칙).
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      # 토큰을 git 설정에 남기지 않는다. 의존성 설치와 테스트가 쓰기 권한 토큰을 읽지 못하게 한다.
+      # main 이 태그 커밋을 품는지 보려고 이력을 모두 받는다.
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      # 릴리스 파일은 캐시를 거치지 않고 lock 으로 새로 받은 의존성으로 만든다.
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - name: Check tag matches package.json version
+        run: |
+          expected="v$(node -p "require('./package.json').version")"
+          if [ "$GITHUB_REF_NAME" != "$expected" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match package.json version $expected" >&2
+            exit 1
+          fi
+      - name: Check tagged commit is on main
+        run: |
+          if ! git merge-base --is-ancestor HEAD origin/main; then
+            echo "Tag $GITHUB_REF_NAME points to a commit that is not on main" >&2
+            exit 1
+          fi
+      - name: Install dependencies
+        run: npm ci
+      - name: Test
+        run: npm test
+      - name: Pack
+        run: npm pack
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          file="studyroom-design-${GITHUB_REF_NAME#v}.tgz"
+          test -f "$file"
+          sha1="$(sha1sum "$file" | cut -d' ' -f1)"
+          sha512="$(sha512sum "$file" | cut -d' ' -f1)"
+          # 패키지 이름은 코드 글꼴로 둔다. 그냥 쓰면 GitHub 가 @studyroom 을 계정 언급으로 바꾼다.
+          notes="$(printf '%s\n\nsha1: %s\nsha512: %s\n' \
+            "\`@studyroom/design\` ${GITHUB_REF_NAME}. CI 의 npm pack 으로 만든 패키지 파일이다. 두 앱은 이 파일의 주소를 의존성으로 쓴다. yarn 1 lock 의 주소 끝 #sha1 은 아래 sha1 과 같아야 한다." \
+            "$sha1" "$sha512")"
+          gh release create "$GITHUB_REF_NAME" "$file" \
+            --verify-tag \
+            --title "$GITHUB_REF_NAME" \
+            --notes "$notes"

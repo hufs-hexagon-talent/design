@@ -1,0 +1,5 @@
+node_modules/
+dist/
+# scripts/postbuild.cjs 가 만드는 파일
+/tokens.css
+*.tgz

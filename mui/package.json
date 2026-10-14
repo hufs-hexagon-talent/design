@@ -1,0 +1,5 @@
+{
+  "private": true,
+  "main": "../dist/cjs/mui.js",
+  "types": "../dist/cjs/mui.d.ts"
+}

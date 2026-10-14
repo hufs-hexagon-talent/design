@@ -1,0 +1,5 @@
+{
+  "private": true,
+  "main": "../dist/cjs/tailwind.js",
+  "types": "../dist/cjs/tailwind.d.ts"
+}

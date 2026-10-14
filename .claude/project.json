@@ -1,0 +1,1 @@
+{"version":1,"baseBranch":"main","longLivedBranches":["main"],"branchNaming":{"pattern":"{type}/{ticket}","ticketPrefix":"","handle":""},"vcs":{"host":"github"},"docs":{"architectureRules":"","domainIndex":"","feSpecDir":""},"codePolicies":["값은 src/tokens.ts 한 곳에만 둔다","릴리스 파일은 CI 의 npm pack 으로만 만들고 같은 이름으로 다시 올리지 않는다","Tailwind 프리셋은 theme.extend 에만 값을 넣는다"]}
