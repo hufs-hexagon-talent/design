@@ -552,9 +552,24 @@ export const muiThemeOptions: ThemeOptions = {
       },
     },
 
+    // 탭 줄 아래 선은 고른 탭의 밑줄이 덮는다(견본 .tabs 의 아래 선과 .tab.on::after 의 bottom -1px).
+    // 밑줄은 scroller 안 bottom 0 에 서고 scroller 는 overflow 를 숨기므로, 밑줄을 더 내리면 잘리고 뿌리의 border 는
+    // 덮지 못한다. 그래서 scroller 아래에 선 두께만큼 여백을 두어 밑줄을 선 자리까지 내리고, 선은 뿌리 안쪽 아래에
+    // 흐림 없는 그림자로 긋는다(면의 그림자가 아니라 선이다). 줄 높이는 탭 44 와 선 1 의 45 다.
+    // 선을 scroller 가 아니라 뿌리에 두어, 넘치는 탭 줄(scrollable)에서 scroller 옆에 서는 화살표 버튼 아래까지 잇는다.
+    // 마운트 전 첫 그림에서만 MUI 가 밑줄을 고른 탭 안에 그린다. 탭이 overflow 를 숨겨 그때는 밑줄이 선 위에 선다.
     MuiTabs: {
       styleOverrides: {
-        root: { minHeight: height.tab, borderBottom: hairline(colors.border.subtle) },
+        root: {
+          minHeight: height.tab,
+          // 세로 탭에는 아래 선과 여백을 두지 않는다. 세로 탭의 밑줄은 MUI 기본(오른쪽 세로 막대)이다.
+          variants: [
+            { props: { orientation: 'horizontal' }, style: { boxShadow: `inset 0 -1px 0 ${colors.border.subtle}` } },
+          ],
+        },
+        scroller: {
+          variants: [{ props: { orientation: 'horizontal' }, style: { paddingBottom: '1px' } }],
+        },
         list: { gap: component.tab.gap },
         indicator: ({ ownerState }) => ({
           // 밑줄은 탭 사이를 미끄러지지 않고 고른 탭으로 바로 옮겨 간다(꾸밈 움직임 금지).

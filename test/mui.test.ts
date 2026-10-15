@@ -555,6 +555,77 @@ describe.each(versions)('%s', (_label, mui, pkg, major) => {
     );
   });
 
+  it('탭 줄: 고른 탭의 밑줄이 탭 줄 아래 선을 덮고, 줄 높이는 탭 44 와 선 1 을 더한 45 다', () => {
+    // 탭 줄을 세로로 잰다(위가 0, 단위 px). 마운트 뒤 MUI 는 밑줄(indicator)을 scroller 의 자식으로 두고 scroller
+    // 안쪽의 bottom 에 세운다. 서버 렌더에서는 밑줄이 아직 고른 탭 안에 있지만 값은 같은 규칙에서 읽는다.
+    // scroller 와 뿌리는 overflow 를 숨기므로 밑줄은 scroller 안쪽에서만 보이고, 그 밖에 붙는 뿌리의 border 는 덮지 못한다.
+    const measure = (theme: unknown, props: Record<string, unknown> = {}) => {
+      const html = render(
+        mui,
+        (m) => h(m.Tabs, { value: 0, ...props }, h(m.Tab, { label: '재학생' }), h(m.Tab, { label: '만료' })),
+        theme,
+      );
+      const css = styleText(html);
+      const read = (muiClass: string, prop: string) => lastValue(css, `.${emotionClass(html, muiClass)}`, prop);
+      const px = (value: string | undefined) => (value === undefined ? 0 : Number.parseFloat(value));
+      // scroller 안쪽의 아래 끝. 탭 높이에 scroller 의 아래 여백을 더한다. 뿌리에는 여백이 없어 뿌리 안쪽의 아래 끝도 같다.
+      const inner = px(read('MuiTab-root', 'height')) + px(read('MuiTabs-scroller', 'padding-bottom'));
+      // 선이 뿌리의 border 면 그 아래 끝의 바깥에, 뿌리 안쪽의 아래 그림자면 그 아래 끝의 안쪽에 선다.
+      const border = read('MuiTabs-root', 'border-bottom')?.match(/^(\d+)px solid (\S+)$/);
+      const inset = read('MuiTabs-root', 'box-shadow')?.match(/^inset 0 -(\d+)px 0 (\S+)$/);
+      const outside = border ? Number(border[1]) : 0;
+      const line = border
+        ? { top: inner, bottom: inner + outside, color: border[2] }
+        : inset
+          ? { top: inner - Number(inset[1]), bottom: inner, color: inset[2] }
+          : null;
+      const lift = px(read('MuiTabs-indicator', 'bottom'));
+      const underline = { top: inner - lift - px(read('MuiTabs-indicator', 'height')), bottom: inner - lift };
+      return {
+        height: inner + outside,
+        line,
+        underline,
+        covered: line !== null && underline.top <= line.top && line.bottom <= underline.bottom,
+      };
+    };
+    const tab = Number.parseFloat(height.tab);
+    const bar = Number.parseFloat(component.tab.indicatorHeight);
+    const line = { top: tab, bottom: tab + 1, color: colors.border.subtle };
+
+    // 대조군: 옛 짜임(0.1.0)은 선을 뿌리의 border 로 그었다. 밑줄(42~44)은 탭 안에 서고 선(44~45)은 scroller 밖에
+    // 남아서, 밑줄이 선 위 1px 에 뜨고 그 아래 옅은 선이 보였다.
+    const tabsOptions = muiThemeOptions.components?.MuiTabs;
+    const old = mui.createTheme({
+      ...muiThemeOptions,
+      components: {
+        ...muiThemeOptions.components,
+        MuiTabs: {
+          ...tabsOptions,
+          styleOverrides: {
+            ...tabsOptions?.styleOverrides,
+            root: { minHeight: height.tab, borderBottom: `1px solid ${colors.border.subtle}` },
+            scroller: {},
+          },
+        },
+      },
+    });
+    expect(measure(old)).toEqual({ height: tab + 1, line, underline: { top: tab - bar, bottom: tab }, covered: false });
+
+    // 견본(.tabs 의 아래 선, .tab.on::after 의 bottom -1px)처럼 밑줄(43~45)이 선(44~45)을 덮는다. 넘치는 탭 줄
+    // (scrollable)도 scroller 가 같으므로 같다.
+    for (const props of [{}, { variant: 'scrollable' }]) {
+      expect(measure(undefined, props), JSON.stringify(props)).toEqual({
+        height: tab + 1,
+        line,
+        underline: { top: tab + 1 - bar, bottom: tab + 1 },
+        covered: true,
+      });
+    }
+
+    // 세로 탭에는 아래 선이 없고 scroller 아래 여백도 없다.
+    expect(measure(undefined, { orientation: 'vertical' })).toMatchObject({ height: tab, line: null });
+  });
+
   it('Slider 손잡이에 색 고리 그림자가 없고, 키보드 초점은 남색 테두리다', () => {
     const slider = (theme?: unknown) => {
       const html = render(mui, (m) => h(m.Slider, { defaultValue: 30 }), theme);
