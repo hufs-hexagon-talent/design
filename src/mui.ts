@@ -111,6 +111,14 @@ declare module '@mui/material/Button' {
 }
 
 const { levels } = typography;
+/**
+ * MUI 의 outlined 라벨 배치에서 온 구조 값이다. 디자인 값이 아니라서 tokens.ts 에 두지 않는다.
+ * 줄어든 라벨은 입력칸 위 테두리 선 위로 9 올라가고(MUI 기본), 테두리의 틈은 라벨보다 6 앞에서 시작한다
+ * (MUI 기본은 라벨 14, 틈 8 이다).
+ */
+const labelShrinkTop = '-9px';
+const notchLead = '6px';
+
 const onFill = colors.inverse.text.primary;
 const hairline = (color: string) => `1px solid ${color}`;
 
@@ -478,6 +486,30 @@ export const muiThemeOptions: ThemeOptions = {
     MuiTextField: { defaultProps: { size: 'small' } },
     MuiFormControl: { defaultProps: { size: 'small' } },
 
+    MuiInputLabel: {
+      styleOverrides: {
+        root: {
+          // 라벨 글자는 입력 글자(body)와 같다. 테두리에 비우는 틈(legend)은 입력 글자의 0.75배로 재고 라벨도 0.75배로
+          // 줄어드므로, 둘이 같은 글자여야 테두리 선이 라벨 끝을 가로지르지 않는다.
+          ...font('body'),
+          variants: [
+            {
+              // 입력칸 높이(40)의 가운데, 입력 글자와 같은 안쪽 여백(12)에 선다. size 와 상관없이 높이가 40 이라 하나로 둔다.
+              props: { variant: 'outlined' },
+              style: {
+                transform: `translate(${component.input.paddingX}, calc((${height.input} - ${levels.body.lineHeight}) / 2)) scale(1)`,
+              },
+            },
+            {
+              // 줄어든 라벨은 테두리 선 위에 선다.
+              props: { variant: 'outlined', shrink: true },
+              style: { transform: `translate(${component.input.paddingX}, ${labelShrinkTop}) scale(0.75)` },
+            },
+          ],
+        },
+      },
+    },
+
     MuiOutlinedInput: {
       styleOverrides: {
         root: ({ ownerState }) => ({
@@ -495,7 +527,11 @@ export const muiThemeOptions: ThemeOptions = {
           ...(ownerState.endAdornment
             ? { '--_trailingPad': component.input.paddingX, paddingRight: 'var(--_trailingPad)' }
             : {}),
-          '& .MuiOutlinedInput-notchedOutline': { borderColor: colors.border.control },
+          // 라벨을 입력 글자의 안쪽 여백으로 옮긴 만큼 테두리의 틈도 옮긴다.
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderColor: colors.border.control,
+            padding: `0 calc(${component.input.paddingX} - ${notchLead})`,
+          },
           '&:hover:not(.Mui-focused):not(.Mui-error):not(.Mui-disabled) .MuiOutlinedInput-notchedOutline':
             { borderColor: colors.border.strong },
           '&.Mui-focused:not(.Mui-error) .MuiOutlinedInput-notchedOutline': {

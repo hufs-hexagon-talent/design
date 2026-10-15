@@ -524,6 +524,37 @@ describe.each(versions)('%s', (_label, mui, pkg, major) => {
     expect(lastValue(disabled.css, `${disabled.base}.Mui-disabled+.MuiSwitch-track`, 'opacity')).toBe('0.12');
   });
 
+  it('outlined 라벨은 입력 글자와 같은 단계라 테두리 틈과 폭이 맞고, 입력 글자의 안쪽 여백에 선다', () => {
+    const field = (theme: unknown, props: Record<string, unknown>) => {
+      const html = render(mui, (m) => h(m.TextField, { label: '이름', ...props }), theme);
+      const css = styleText(html);
+      return {
+        css,
+        label: `.${emotionClass(html, ['MuiInputLabel-root', 'MuiInputLabel-outlined'])}`,
+        input: `.${emotionClass(html, 'MuiOutlinedInput-root')}`,
+      };
+    };
+
+    // 대조군: MUI 기본 라벨은 16px 이고 입력 글자도 16px 이다. 이 테마는 입력 글자를 15px 로 바꾸므로 라벨도 함께
+    // 바꾸지 않으면 줄어든 라벨(16 의 0.75배)이 틈(15 의 0.75배)보다 넓어 선이 라벨 끝을 가로지른다.
+    const plain = field(mui.createTheme(), {});
+    expect(lastValue(plain.css, plain.label, 'font-size')).toBe('1rem');
+
+    const empty = field(undefined, {});
+    expect(lastValue(empty.css, empty.label, 'font-size')).toBe(levels.body.fontSize);
+    expect(lastValue(empty.css, `${empty.input}`, 'font-size')).toBe(levels.body.fontSize);
+    expect(lastValue(empty.css, empty.label, 'transform')).toBe(
+      `translate(${component.input.paddingX}, calc((${height.input} - ${levels.body.lineHeight}) / 2)) scale(1)`,
+    );
+
+    const filled = field(undefined, { defaultValue: '김민준' });
+    expect(lastValue(filled.css, filled.label, 'transform')).toBe(`translate(${component.input.paddingX}, -9px) scale(0.75)`);
+    // 틈은 라벨보다 6 앞에서 시작한다(MUI 기본의 라벨 14, 틈 8 과 같은 사이).
+    expect(lastValue(filled.css, `${filled.input} .MuiOutlinedInput-notchedOutline`, 'padding')).toBe(
+      `0 calc(${component.input.paddingX} - 6px)`,
+    );
+  });
+
   it('Slider 손잡이에 색 고리 그림자가 없고, 키보드 초점은 남색 테두리다', () => {
     const slider = (theme?: unknown) => {
       const html = render(mui, (m) => h(m.Slider, { defaultValue: 30 }), theme);
