@@ -100,7 +100,7 @@ import '@studyroom/design/tokens.css';
 - typography: 글자 8단계를 variant 로 더했다(`title`, `heading`, `prose`, `body`, `control`, `meta`, `label`, `micro`). `<Typography variant="title">` 은 `h1` 요소로 그린다. `heading` 은 `h2` 요소로 그린다. MUI 기본 variant(`h1`~`h6`, `body1` 등)는 옛 화면이 쓰므로 그대로 둔다. `button` 은 14/20, 굵기 600 이고 대문자로 바꾸지 않는다.
 - 바탕: `CssBaseline` 이 body 에 body 단계 글자(15/22)와 `word-break: keep-all` 을 건다. body 의 바탕색은 `palette.background.default` 다. 기본값은 바닥 색이다. 앱이 그 값을 흰색으로 바꾸면 body 도 흰색이 된다. 앱 뿌리의 `<CssBaseline />` 을 그대로 둔다.
 - spacing 과 breakpoint 는 MUI 기본값 그대로다. spacing 은 8px 이다. breakpoint md 는 900px 이다.
-- 부품: 누를 때 물결(ripple)을 끈다. 버튼, 아이콘 버튼, 가림막, 툴팁, 입력칸, 탭, 표 칸, 메뉴의 모양은 견본 값을 따른다.
+- 부품: 누를 때 물결(ripple)을 끈다. 버튼, 아이콘 버튼, 가림막, 툴팁, 입력칸, 탭, 표 칸, 메뉴, 스위치의 모양은 견본 값을 따른다.
 - 초점: 키보드 초점은 남색 2px 테두리로 보인다. 탭, 메뉴 항목, 서랍 목록, 스위치는 부모가 둘레를 잘라서 테두리를 안쪽에 긋는다.
 - 판: Dialog 는 모서리 14 와 overlay 그림자를 받는다. 화면을 채우는 판(`fullScreen`)은 모서리를 받지 않는다. 판의 폭은 테마가 정하지 않는다. Dialog 부품이 폭 462 를 정한다.
 - 링크: Link 는 문장 속 링크다. 글자 단계는 둘레의 글자를 따른다. 색은 주 색이고 밑줄은 늘 있다. 카드의 13px 글자 조작은 Link 가 아니라 Button `variant="link"` 로 쓴다.
@@ -109,6 +109,9 @@ import '@studyroom/design/tokens.css';
 - Slider: 손잡이에 그림자와 주 색 고리(hover, 초점, 끌기)를 두지 않는다. 키보드 초점은 남색 2px 테두리다. 앱이 `sx` 로 준 그림자는 테마보다 뒤에 붙어 이기므로 앱 코드에서 지운다.
 - 움직임: 메뉴, 팝오버, 툴팁, 토스트는 커지는 움직임 없이 바로 나타난다. 탭 밑줄은 탭 사이를 미끄러지지 않고 고른 탭으로 바로 옮겨 간다. 판과 가림막의 옅어짐, 서랍의 밀려 나옴은 MUI 기본 그대로다.
 - 입력칸: 한 줄 입력칸은 높이 40 이다. `TextField` 와 `FormControl` 의 기본 크기를 small 로 두어 라벨 자리를 높이 40 에 맞춘다.
+- outlined 라벨: 라벨 글자는 입력 글자와 같은 body 단계(15/22)다. 테두리의 틈(notch)은 입력 글자의 0.75배로 재고 줄어든 라벨도 0.75배라서, 둘이 같은 단계여야 테두리 선이 라벨 끝을 가로지르지 않는다. 비어 있는 라벨은 입력 글자와 같은 안쪽 여백(12)에, 높이 40 의 가운데에 선다. 줄어든 라벨은 테두리 선 위에 서고, 테두리의 틈은 라벨보다 6 앞에서 시작한다.
+- 스위치: 바탕은 끄면 `component.switch.trackOff`(#B9BEC7), 켜면 `component.switch.trackOn`(#8AA3BB)이고 옅게 비치지 않는다. 켠 바탕은 `color="primary"`(기본)일 때만 정하고, 다른 color 와 쓸 수 없는 스위치(disabled)의 옅은 바탕은 MUI 기본을 따른다. 손잡이에는 윤곽(`component.switch.thumbShadow`)을 준다. 끈 손잡이는 흰색이라 윤곽이 없으면 흰 카드 위에서 사라진다. 켠 손잡이는 주 색이다. 앱이 `color` 를 주지 않고 `sx` 로 켠 바탕의 색만 덮으면 바탕은 테마의 `opacity` 1 을 그대로 받고, 덮은 색이 손잡이와 같을 때 손잡이가 바탕에 묻히므로 `opacity` 도 함께 덮는다.
+- 탭 줄 선: 가로 탭 줄 아래에 1px `colors.border.subtle` 선을 긋고, 고른 탭의 밑줄(2px)이 그 선 위에 겹쳐 선을 덮는다(견본 `.tabs` 와 `.tab.on::after`). 탭 줄의 높이는 탭 44 와 선 1 을 더한 45 다. 선은 Tabs 뿌리 안쪽에 흐림 없는 그림자로 긋고, 밑줄은 scroller 아래에 둔 1px 여백 자리까지 내려 선다. 앱이 Tabs 에 `borderBottom` 을 따로 주면 선이 두 줄이 되고 밑줄이 아래 줄을 덮지 못하므로 지운다. 세로 탭에는 선이 없다.
 
 버튼 모양은 MUI 의 variant 와 color 로 고른다.
 
@@ -282,7 +285,7 @@ grep -A 2 '^"@studyroom/design@' yarn.lock
 
 - 대비: 읽는 글자 토큰이 놓이는 면에서 4.5:1 이상이다. 면은 card, subtle, page, hover, selected 다. 흰 글자는 주 색, 위험, 성공, 경고 면 위에서 잰다. inverse 글자는 inverse 면 위에서 잰다.
 - `tokens.css`: 모든 토큰 값이 정해진 이름의 변수로 들어 있다.
-- MUI: `createTheme(muiThemeOptions)` 가 MUI 9 와 MUI 7 에서 모두 테마를 만든다. 두 버전에서 부품을 서버 렌더하고 높이, 모서리, 글자 크기, 그림자를 확인한다. 아이콘 버튼의 최소 크기와 `size="large"` 의 44, 화면을 채우는 판의 모서리, body 바탕색, 안쪽 초점 테두리, 탭 밑줄의 움직임 없음, elevation 그림자가 두 값뿐인 것, Slider 손잡이에 색 고리가 없는 것도 확인한다. Slider 는 MUI 기본 테마를 대조군으로 함께 잰다. 브라우저 환경(jsdom)에서는 버튼을 눌러도 물결이 생기지 않는지, 키보드 초점을 받은 탭의 테두리, 툴팁과 토스트가 바로 나타나는지를 확인한다.
+- MUI: `createTheme(muiThemeOptions)` 가 MUI 9 와 MUI 7 에서 모두 테마를 만든다. 두 버전에서 부품을 서버 렌더하고 높이, 모서리, 글자 크기, 그림자를 확인한다. 아이콘 버튼의 최소 크기와 `size="large"` 의 44, 화면을 채우는 판의 모서리, body 바탕색, 안쪽 초점 테두리, 탭 밑줄의 움직임 없음, elevation 그림자가 두 값뿐인 것, Slider 손잡이에 색 고리가 없는 것, 스위치의 바탕 두 색과 손잡이 윤곽, outlined 라벨의 글자 단계와 자리, 고른 탭의 밑줄이 탭 줄 아래 선을 덮는 것도 확인한다. Slider, 스위치, outlined 라벨은 MUI 기본 테마를, 탭 줄은 0.1.0 의 짜임(뿌리의 border 로 그은 선)을 대조군으로 함께 잰다. 브라우저 환경(jsdom)에서는 버튼을 눌러도 물결이 생기지 않는지, 키보드 초점을 받은 탭의 테두리, 툴팁과 토스트가 바로 나타나는지를 확인한다.
 - Tailwind: user-app 과 같은 짜임(`theme.colors` 를 바꾼 설정)으로 Tailwind 3.4 를 돌려 class 마다 값을 확인한다.
 - tailwind-merge 2.2.2: 글자 크기 class 와 글자색 class 를 함께 두어도 둘 다 남는다. `tracking-<단계>` 도 함께 남는다.
 - 타입: `test/types/consumer.tsx` 를 MUI 9 타입으로 검사한다. `variant="title"` 과 `palette.brand` 가 통과하고, 없는 variant 는 오류가 나야 한다.
