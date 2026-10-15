@@ -491,6 +491,39 @@ describe.each(versions)('%s', (_label, mui, pkg, major) => {
     expect(paperShadow('Card', 0)).toBe('none');
   });
 
+  it('Switch 는 견본의 바탕 두 색과 손잡이 윤곽을 갖는다', () => {
+    const parts = (theme: unknown, props: Record<string, unknown>) => {
+      const html = render(mui, (m) => h(m.Switch, props), theme);
+      return {
+        css: styleText(html),
+        thumb: `.${emotionClass(html, 'MuiSwitch-thumb')}`,
+        track: `.${emotionClass(html, 'MuiSwitch-track')}`,
+        base: `.${emotionClass(html, 'MuiSwitch-switchBase')}`,
+      };
+    };
+
+    // 대조군: MUI 기본 테마의 손잡이는 elevation 1 그림자이고 꺼진 바탕은 검정을 0.38 로 옅게 깐다. 이 테마의
+    // elevation 1 은 거의 보이지 않는 카드 그림자라서, 손잡이 윤곽을 따로 주지 않으면 흰 카드 위에서 사라진다.
+    const plain = parts(mui.createTheme(), {});
+    expect(lastValue(plain.css, plain.thumb, 'box-shadow')).toMatch(/rgba\(0,\s*0,\s*0,\s*0\.2\)/);
+    expect(lastValue(plain.css, plain.track, 'opacity')).toBe('0.38');
+
+    const off = parts(undefined, {});
+    expect(squash(lastValue(off.css, off.thumb, 'box-shadow'))).toBe(squash(component.switch.thumbShadow));
+    expect(lastValue(off.css, off.track, 'background-color')).toBe(component.switch.trackOff);
+    expect(lastValue(off.css, off.track, 'opacity')).toBe('1');
+
+    // 켜진 바탕은 MUI 가 '.Mui-checked + 바탕' 으로 칠한다. 테마 규칙이 같은 선택자로 뒤에 와서 이긴다.
+    const on = parts(undefined, { defaultChecked: true });
+    const checkedTrack = `${on.base}.Mui-checked+.MuiSwitch-track`;
+    expect(lastValue(on.css, checkedTrack, 'background-color')).toBe(component.switch.trackOn);
+    expect(lastValue(on.css, checkedTrack, 'opacity')).toBe('1');
+
+    // 꺼진 스위치의 옅은 바탕은 MUI 기본 그대로다(더 높은 우선순위의 '.Mui-disabled + 바탕').
+    const disabled = parts(undefined, { disabled: true });
+    expect(lastValue(disabled.css, `${disabled.base}.Mui-disabled+.MuiSwitch-track`, 'opacity')).toBe('0.12');
+  });
+
   it('Slider 손잡이에 색 고리 그림자가 없고, 키보드 초점은 남색 테두리다', () => {
     const slider = (theme?: unknown) => {
       const html = render(mui, (m) => h(m.Slider, { defaultValue: 30 }), theme);

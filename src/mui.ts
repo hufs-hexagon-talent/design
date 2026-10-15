@@ -645,7 +645,28 @@ export const muiThemeOptions: ThemeOptions = {
     },
 
     MuiSwitch: {
-      styleOverrides: { switchBase: insetFocusRing },
+      styleOverrides: {
+        // 켜진 바탕은 color="primary" 일 때만 정한다. color 를 주지 않은 스위치도 primary 다. 다른 color 는
+        // MUI 기본을 따라 그 color 의 main 을 opacity 0.5 로 칠한다.
+        // MUI 는 켜진 바탕을 switchBase 의 '.Mui-checked + .MuiSwitch-track' 으로 칠하므로 같은 선택자로 덮는다.
+        // color 를 주지 않고 sx 로 켜진 바탕의 색만 덮으면 여기의 opacity 1 은 그대로 받는다. 덮은 색이 손잡이와
+        // 같으면 손잡이가 바탕에 묻히므로 opacity 도 함께 덮는다.
+        switchBase: {
+          ...insetFocusRing,
+          variants: [
+            {
+              props: { color: 'primary' },
+              style: {
+                '&.Mui-checked + .MuiSwitch-track': { backgroundColor: component.switch.trackOn, opacity: 1 },
+              },
+            },
+          ],
+        },
+        // MUI 는 손잡이에 shadows[1] 을 쓰는데, 이 테마의 shadows[1] 은 카드 그림자라 흰 카드 위에서 손잡이가 사라진다.
+        thumb: { boxShadow: component.switch.thumbShadow },
+        // 꺼진 바탕. 꺼진 스위치(disabled)의 옅은 바탕은 MUI 의 '.Mui-disabled + .MuiSwitch-track' 이 더 높은 우선순위로 준다.
+        track: { backgroundColor: component.switch.trackOff, opacity: 1 },
+      },
     },
 
     // 그림자는 카드와 판 두 가지뿐이다. elevation 그림자는 위의 shadows 가 두 값으로 바꾸고,

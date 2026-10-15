@@ -150,6 +150,15 @@ export const component = {
     inlineThickness: '2px',
     inlineTrack: 'rgba(255, 255, 255, 0.35)',
   },
+  /**
+   * 스위치. 견본 v2 의 값이다. 꺼진 손잡이는 흰색이라 흰 카드 위에서 윤곽이 있어야 보인다. thumbShadow 는 면의
+   * 그림자(shadow)가 아니라 손잡이의 윤곽이고, 켜진 손잡이는 주 색이다.
+   */
+  switch: {
+    trackOff: '#B9BEC7',
+    trackOn: '#8AA3BB',
+    thumbShadow: '0 1px 3px rgba(0, 0, 0, 0.3)',
+  },
 } as const;
 
 export const tokens = { colors, typography, radius, shadow, height, space, component } as const;
