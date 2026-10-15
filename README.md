@@ -22,19 +22,19 @@
 두 앱은 GitHub Release 에 올린 파일을 주소로 받는다. 주소에는 태그와 버전이 들어간다.
 
 ```
-https://github.com/hufs-hexagon-talent/design/releases/download/v0.1.0/studyroom-design-0.1.0.tgz
+https://github.com/hufs-hexagon-talent/design/releases/download/v0.2.0/studyroom-design-0.2.0.tgz
 ```
 
 admin-app(yarn 4):
 
 ```sh
-yarn add @studyroom/design@https://github.com/hufs-hexagon-talent/design/releases/download/v0.1.0/studyroom-design-0.1.0.tgz
+yarn add @studyroom/design@https://github.com/hufs-hexagon-talent/design/releases/download/v0.2.0/studyroom-design-0.2.0.tgz
 ```
 
 user-app(yarn 1):
 
 ```sh
-yarn add @studyroom/design@https://github.com/hufs-hexagon-talent/design/releases/download/v0.1.0/studyroom-design-0.1.0.tgz
+yarn add @studyroom/design@https://github.com/hufs-hexagon-talent/design/releases/download/v0.2.0/studyroom-design-0.2.0.tgz
 ```
 
 두 명령은 `package.json` 과 `yarn.lock` 을 함께 바꾼다. 두 파일을 같은 PR 에 넣는다. Docker 빌드의 설치 명령은 lock 이 고정한 주소와 해시를 확인해야 한다. admin-app 의 Dockerfile 은 이미 `yarn install --immutable` 을 쓴다. user-app 의 Dockerfile 은 지금 `yarn install` 을 쓴다. 그래서 user-app 에 패키지를 더하는 PR 에서 `yarn install --frozen-lockfile` 로 바꾼다.
@@ -244,9 +244,9 @@ user-app 의 MUI(7)도 같은 테마를 쓸 수 있다. 앱 뿌리에 `ThemeProv
 
 ## 릴리스 절차
 
-1. PR 에서 `package.json` 의 `version` 을 올린다. 예: `npm version 0.1.1 --no-git-tag-version`.
+1. PR 에서 `package.json` 의 `version` 을 올린다. 예: `npm version 0.2.1 --no-git-tag-version`.
 2. PR 을 main 에 병합한다.
-3. 원격 main 의 병합 커밋에 태그 `vX.Y.Z` 를 달고 그 태그만 push 한다. 예: `git fetch origin && git tag v0.1.1 origin/main && git push origin v0.1.1`.
+3. 원격 main 의 병합 커밋에 태그 `vX.Y.Z` 를 달고 그 태그만 push 한다. 예: `git fetch origin && git tag v0.2.1 origin/main && git push origin v0.2.1`.
 4. CI(`.github/workflows/release.yml`)가 태그와 `version` 이 같은지 확인한다. CI 는 태그 커밋이 main 에 있는지도 확인한다. 이어서 `npm ci`, `npm test`, `npm pack` 을 돌리고 GitHub Release 를 만들어 tgz 를 올린다. Release 설명에는 tgz 의 sha1 과 sha512 가 들어간다.
 5. 두 앱의 의존성 주소를 새 태그로 바꾸고 `yarn.lock` 을 함께 갱신한다. user-app 의 lock 은 주소 끝에 `#sha1` 을 적는다. 그 값이 Release 설명의 sha1 과 같은지 확인한다.
 
@@ -270,12 +270,12 @@ npm run build   # dist 와 tokens.css 를 만든다
 npm pack --dry-run
 ```
 
-태그 전에 `npm pack` 결과를 두 앱의 사본에 설치해 확인한다. 같은 0.1.0 을 다시 빌드해 같은 경로로 `yarn add` 하면 yarn 1 은 경고 없이 옛 내용을 설치한다. yarn 1 은 같은 경로에 대해 전역 캐시의 옛 파일과 lock 의 옛 항목을 그대로 쓴다. 새 캐시 폴더(`YARN_CACHE_FOLDER`)를 주어도 lock 에 옛 항목이 있으면 옛 내용이 들어간다. 그래서 user-app 사본에는 빌드마다 파일 이름을 바꿔 설치한다.
+태그 전에 `npm pack` 결과를 두 앱의 사본에 설치해 확인한다. 같은 0.2.0 을 다시 빌드해 같은 경로로 `yarn add` 하면 yarn 1 은 경고 없이 옛 내용을 설치한다. yarn 1 은 같은 경로에 대해 전역 캐시의 옛 파일과 lock 의 옛 항목을 그대로 쓴다. 새 캐시 폴더(`YARN_CACHE_FOLDER`)를 주어도 lock 에 옛 항목이 있으면 옛 내용이 들어간다. 그래서 user-app 사본에는 빌드마다 파일 이름을 바꿔 설치한다.
 
 ```sh
-sha="$(shasum -a 1 studyroom-design-0.1.0.tgz | cut -c1-8)"
-cp studyroom-design-0.1.0.tgz "vendor/studyroom-design-0.1.0-$sha.tgz"
-yarn add "@studyroom/design@file:./vendor/studyroom-design-0.1.0-$sha.tgz"
+sha="$(shasum -a 1 studyroom-design-0.2.0.tgz | cut -c1-8)"
+cp studyroom-design-0.2.0.tgz "vendor/studyroom-design-0.2.0-$sha.tgz"
+yarn add "@studyroom/design@file:./vendor/studyroom-design-0.2.0-$sha.tgz"
 grep -A 2 '^"@studyroom/design@' yarn.lock
 ```
 
