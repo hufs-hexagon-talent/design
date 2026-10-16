@@ -1,5 +1,6 @@
-import postcss from 'postcss';
+import postcss, { type AtRule, type Rule } from 'postcss';
 import tailwindcss from 'tailwindcss';
+import resolveConfig from 'tailwindcss/resolveConfig';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { colors, radius, shadow, typography } from '../dist/esm/index.js';
 import { declarations, requireSelf, rgbPrefix } from './helpers';
@@ -22,6 +23,8 @@ const used = [
   'bg-footermainbg', 'text-footertextcolor', 'bg-gray-200', 'text-cyan-500',
   // preset 이 건드리지 않는 기본 키
   'text-xl', 'rounded-md', 'shadow', 'tracking-tight',
+  // hover 계열 variant
+  'hover:bg-subtle', 'hover:border-strong', 'group-hover:text-primary', 'md:hover:bg-hover',
 ];
 
 const userAppLikeConfig = {
@@ -49,9 +52,10 @@ beforeAll(async () => {
 const rule = (selector: string) => declarations(css, selector);
 
 describe('Tailwind preset 의 모양', () => {
-  it('module.exports 가 곧 preset 이고, theme.extend 만 있다', () => {
+  it('module.exports 가 곧 preset 이고, theme.extend 와 future 만 있다', () => {
     expect(preset.default).toBeUndefined();
-    expect(Object.keys(preset)).toEqual(['theme']);
+    expect(Object.keys(preset)).toEqual(['theme', 'future']);
+    expect(preset.future).toEqual({ hoverOnlyWhenSupported: true });
     expect(Object.keys(preset.theme)).toEqual(['extend']);
     expect(preset.plugins).toBeUndefined();
     expect(preset.presets).toBeUndefined();
@@ -173,5 +177,46 @@ describe('Tailwind 3.4 가 만든 class (theme.colors 를 바꾼 앱 설정)', (
     expect(rule('.rounded-md').get('border-radius')).toBe('0.375rem');
     expect(rule('.shadow').get('--tw-shadow')).toBe('0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)');
     expect(rule('.tracking-tight').get('letter-spacing')).toBe('-0.025em');
+  });
+});
+
+describe('hover: class 는 hover 가 되는 기기에서만 걸린다', () => {
+  // 선택자에 cls 가 든 규칙을 찾아, 그 규칙을 감싼 @media 조건을 돌려준다(감싼 것이 없으면 null).
+  const mediaOf = (cls: string) => {
+    const found: Array<string | null> = [];
+    postcss.parse(css).walkRules((rule: Rule) => {
+      if (!rule.selector.includes(cls)) return;
+      const parent = rule.parent;
+      found.push(parent?.type === 'atrule' && (parent as AtRule).name === 'media' ? (parent as AtRule).params : null);
+    });
+    return found;
+  };
+
+  it('앱 설정에 future 가 없으면 preset 의 future 가 합쳐진다', () => {
+    expect(resolveConfig(userAppLikeConfig).future).toEqual({ hoverOnlyWhenSupported: true });
+  });
+
+  it.each([
+    ['hover\\:bg-subtle:hover', '(hover: hover) and (pointer: fine)'],
+    ['hover\\:border-strong:hover', '(hover: hover) and (pointer: fine)'],
+    ['.group:hover .group-hover\\:text-primary', '(hover: hover) and (pointer: fine)'],
+  ])('%s 는 %s 안에만 있다', (cls, media) => {
+    expect(mediaOf(cls)).toEqual([media]);
+  });
+
+  it('폭 조건과 함께 쓴 md:hover: 도 hover 조건 안에 있다', () => {
+    const found: string[] = [];
+    postcss.parse(css).walkRules((rule: Rule) => {
+      if (!rule.selector.includes('md\\:hover\\:bg-hover:hover')) return;
+      for (let node = rule.parent; node && node.type === 'atrule'; node = node.parent) {
+        found.push((node as AtRule).params);
+      }
+    });
+    expect(found).toContain('(hover: hover) and (pointer: fine)');
+    expect(found.some((params) => params.includes('min-width'))).toBe(true);
+  });
+
+  it('앱 설정에 future 가 있으면 앱의 future 가 통째로 이겨 preset 의 값이 빠진다(README 의 안내)', () => {
+    expect(resolveConfig({ ...userAppLikeConfig, future: {} }).future).toEqual({});
   });
 });

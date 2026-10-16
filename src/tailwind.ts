@@ -3,6 +3,7 @@
 // 값은 모두 theme.extend 에 넣는다. user-app 은 theme.colors 를 통째로 바꾸므로,
 // preset 이 theme.colors 처럼 바로 넣은 값은 앱 설정에 밀려 사라진다.
 // plugins, presets, base 스타일은 두지 않는다. presets: [] 를 두면 Tailwind 기본 설정이 통째로 빠진다.
+// 값 밖에서는 future 의 hoverOnlyWhenSupported 하나만 켠다(아래 future 의 설명).
 import type { Config } from 'tailwindcss';
 import { colors, radius, shadow, typography } from './tokens.js';
 
@@ -94,6 +95,14 @@ const preset = {
         sans: typography.fontFamily,
       },
     },
+  },
+  // hover: 계열 class(hover:, group-hover:, peer-hover:)를 마우스처럼 hover 가 되는 기기에서만 건다. Tailwind 는
+  // 그 class 를 '@media (hover: hover) and (pointer: fine)' 안에 둔다. 휴대폰 브라우저는 손가락으로 누른 요소에
+  // :hover 를 바깥을 누를 때까지 남기므로, 조건 없이 걸면 누른 버튼에 hover 면이 남는다.
+  // Tailwind 는 preset 의 future 를 앱 설정에 합친다. 다만 키 단위로 합쳐서, 앱 설정에 future 가 있으면 앱의
+  // future 가 통째로 이기고 이 값은 빠진다. 그때는 앱 설정의 future 에 이 값을 함께 적는다.
+  future: {
+    hoverOnlyWhenSupported: true,
   },
 } satisfies Partial<Config>;
 

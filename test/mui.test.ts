@@ -9,9 +9,12 @@ import { colors, component, height, radius, shadow, typography } from '../dist/e
 import { muiThemeOptions } from '../dist/esm/mui.js';
 import {
   baseStyle,
+  cascade,
   declarations,
+  effectiveValue,
   emotionClass,
   lastValue,
+  mediaDeclarations,
   requireSelf,
   rulesContaining,
   squash,
@@ -29,6 +32,9 @@ const versions: Array<[label: string, mui: Mui, pkg: string, major: number]> = [
 
 const { levels } = typography;
 const white = colors.inverse.text.primary;
+/** hover 가 되는 기기와 없는 기기의 미디어 조건. */
+const HOVER = '(hover: hover)';
+const NO_HOVER = '(hover: none)';
 
 /** ThemeProvider 와 새 emotion 캐시(key sr) 안에서 서버 렌더한다. 캐시를 새로 만들어 스타일이 매번 HTML 에 실린다. */
 function render(mui: Mui, children: (m: Mui) => ReactNode, theme = mui.createTheme(muiThemeOptions)): string {
@@ -132,7 +138,10 @@ describe.each(versions)('%s', (_label, mui, pkg, major) => {
       expect(style.get('text-transform')).toBe('none');
       expect(style.get('padding')).toBe(`0 ${component.button.paddingX}`);
       const cls = emotionClass(html, ['MuiButton-contained', 'MuiButton-colorPrimary']);
-      expect(declarations(css, `.${cls}:hover`).get('background-color')).toBe(colors.brand.hover);
+      // hover 면은 hover 가 되는 기기에서만 칠한다. 조건 없는 :hover 에는 면이 없다.
+      const hover = cascade(css, `.${cls}:hover`, 'background-color');
+      expect(effectiveValue(hover, HOVER)).toBe(colors.brand.hover);
+      expect(effectiveValue(hover, NO_HOVER)).toBeUndefined();
       expect(declarations(css, `.${cls}.Mui-disabled`).get('background-color')).toBe(colors.surface.disabled);
     });
 
@@ -209,7 +218,10 @@ describe.each(versions)('%s', (_label, mui, pkg, major) => {
     expect(ghost.get('font-weight')).toBe('500');
     expect(ghost.get('padding')).toBe(`0 ${component.button.paddingXGhost}`);
     const ghostCls = emotionClass(html, ['MuiButton-text', 'MuiButton-colorPrimary']);
-    expect(declarations(css, `.${ghostCls}:hover`).get('background-color')).toBe(colors.surface.subtle);
+    const ghostHover = mediaDeclarations(css, HOVER, `.${ghostCls}:hover`);
+    expect(ghostHover.get('background-color')).toBe(colors.surface.subtle);
+    expect(ghostHover.get('color')).toBe(colors.text.primary);
+    expect(declarations(css, `.${ghostCls}:hover`).get('background-color')).toBeUndefined();
 
     const link = baseStyle(html, 'MuiButton-link');
     expect(link.get('height')).toBe('auto');
@@ -217,9 +229,10 @@ describe.each(versions)('%s', (_label, mui, pkg, major) => {
     expect(link.get('font-size')).toBe(levels.meta.fontSize);
     expect(link.get('color')).toBe(colors.text.tertiary);
     const linkCls = emotionClass(html, 'MuiButton-link');
-    const linkHover = declarations(css, `.${linkCls}:hover`);
+    const linkHover = mediaDeclarations(css, HOVER, `.${linkCls}:hover`);
     expect(linkHover.get('color')).toBe(colors.brand.main);
     expect(linkHover.get('text-decoration')).toBe('underline');
+    expect(declarations(css, `.${linkCls}:hover`).get('color')).toBeUndefined();
 
     const small = baseStyle(html, 'MuiButton-sizeSmall');
     expect(small.get('height')).toBe(height.buttonSmall);
@@ -265,7 +278,12 @@ describe.each(versions)('%s', (_label, mui, pkg, major) => {
         m.Table,
         { key: 'table', stickyHeader: true },
         h(m.TableHead, null, h(m.TableRow, null, h(m.TableCell, null, '이름'))),
-        h(m.TableBody, null, h(m.TableRow, { hover: true }, h(m.TableCell, null, '학생'))),
+        h(
+          m.TableBody,
+          null,
+          h(m.TableRow, { key: 'row', hover: true }, h(m.TableCell, null, '학생')),
+          h(m.TableRow, { key: 'selected', hover: true, selected: true }, h(m.TableCell, null, '고른 학생')),
+        ),
       ),
       h(
         m.Popover,
@@ -296,6 +314,12 @@ describe.each(versions)('%s', (_label, mui, pkg, major) => {
     expect(icon.get('padding')).toBe('0');
     expect(icon.get('border-radius')).toBe(radius.control);
     expect(icon.get('color')).toBe(colors.text.secondary);
+    // MUI 는 아이콘 버튼의 hover 면을 조건 없이 칠하고 hover 가 없는 기기에서 투명으로 되돌린다. 테마의 hover 면은
+    // 그 뒤에 붙어 hover 가 되는 기기에서 이긴다. 테마의 기본 면도 투명이라 hover 가 없는 기기의 값은 따로 두지 않는다.
+    const iconCls = emotionClass(html, 'MuiIconButton-root');
+    const iconHover = cascade(css, `.${iconCls}:hover`, 'background-color');
+    expect(effectiveValue(iconHover, HOVER)).toBe(colors.surface.subtle);
+    expect(effectiveValue(iconHover, NO_HOVER)).toBe('transparent');
 
     // 문장 속 링크: 둘레의 글자 단계를 따르고, 주 색에 밑줄을 늘 둔다.
     const link = baseStyle(html, 'MuiLink-root');
@@ -319,6 +343,13 @@ describe.each(versions)('%s', (_label, mui, pkg, major) => {
       rulesContaining(css, `.${fieldCls}.Mui-focused:not(.Mui-error) .MuiOutlinedInput-notchedOutline`).at(-1)
         ?.decls.get('border-color'),
     ).toBe(colors.brand.main);
+    const hoverOutline =
+      `.${fieldCls}:hover:not(.Mui-focused):not(.Mui-error):not(.Mui-disabled) .MuiOutlinedInput-notchedOutline`;
+    expect(mediaDeclarations(css, HOVER, hoverOutline).get('border-color')).toBe(colors.border.strong);
+    // MUI 는 hover 가 없는 기기에서 선을 자기 색(검정 23%)으로 되돌린다. 테마가 그 자리를 이 테마의 선 색으로 둔다.
+    const muiTouchOutline = mediaDeclarations(css, NO_HOVER, `.${fieldCls}:hover .MuiOutlinedInput-notchedOutline`);
+    expect(muiTouchOutline.get('border-color')).toBe('rgba(0, 0, 0, 0.23)');
+    expect(mediaDeclarations(css, NO_HOVER, hoverOutline).get('border-color')).toBe(colors.border.control);
     const multi = baseStyle(html, 'MuiInputBase-multiline');
     expect(multi.get('height')).toBeUndefined();
     // 라벨이 있는 TextField 도 기본 크기가 small 이라 라벨 자리가 높이 40 에 맞는다.
@@ -344,6 +375,22 @@ describe.each(versions)('%s', (_label, mui, pkg, major) => {
     expect(cell.get('height')).toBe(height.row);
     expect(cell.get('border-top')).toBe(`1px solid ${colors.border.subtle}`);
     expect(cell.get('font-size')).toBe(levels.body.fontSize);
+    // hover 행: MUI 는 면(action.hover)을 기기를 가리지 않고 칠한다. 테마는 hover 가 되는 기기에서 hover 면을,
+    // hover 가 없는 기기에서는 투명을 둔다.
+    const rowCls = emotionClass(html, 'MuiTableRow-hover');
+    const rowHover = cascade(css, `.${rowCls}.MuiTableRow-hover:hover`, 'background-color');
+    expect(rowHover[0]).toEqual([null, 'rgba(0, 0, 0, 0.04)']);
+    expect(effectiveValue(rowHover, HOVER)).toBe(colors.surface.hover);
+    expect(
+      mediaDeclarations(css, NO_HOVER, `.${rowCls}.MuiTableRow-hover:not(.Mui-selected):hover`).get('background-color'),
+    ).toBe('transparent');
+    // 고른 행: MUI 는 hover 하면 더 진한 면을 기기를 가리지 않고 칠한다. hover 가 없는 기기에서는 MUI 가 고른 행에
+    // 칠하는 면으로 되돌린다.
+    const selectedFill = declarations(css, `.${rowCls}.Mui-selected`).get('background-color');
+    expect(selectedFill).toMatch(/^rgba\(0, 45, 86, 0\.08\)$/);
+    expect(
+      mediaDeclarations(css, NO_HOVER, `.${rowCls}.MuiTableRow-hover.Mui-selected:hover`).get('background-color'),
+    ).toBe(selectedFill);
 
     const popover = baseStyle(html, 'MuiPopover-paper');
     expect(popover.get('border-radius')).toBe(radius.control);
