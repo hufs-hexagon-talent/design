@@ -19,7 +19,7 @@ function jsFiles(dir: string): string[] {
 describe('패키지 구성', () => {
   it('공개 게시를 막고, 릴리스 주소의 저장소를 가리킨다', () => {
     expect(pkg.private).toBe(true);
-    expect(pkg.license).toBe('UNLICENSED');
+    expect(pkg.license).toBe('MIT');
     expect(pkg.repository).toBe('github:hufs-hexagon-talent/design');
     expect(pkg.files).toEqual(['dist', 'docs', 'mui', 'tailwind', 'tokens.css']);
     expect(pkg.sideEffects).toEqual(['*.css']);
