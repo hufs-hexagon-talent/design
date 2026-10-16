@@ -142,7 +142,7 @@ DesktopOnlyNote 와 RunLock 은 admin-app 의 `src/components/step/` 에 있던 
 - MUI 의 기본 진행 표시는 지름 16 이고 바탕 고리가 없다. 그래서 Button 부품은 `loadingIndicator` 로 Spinner 의 버튼 안 모양을 넘긴다.
 - danger 는 되돌릴 수 없는 조작의 확인 판 안에만 둔다.
 - 문장 속 링크는 MUI Link 다. 글자 단계는 둘레의 글자를 따르고, 색은 `colors.brand.main` 이며, 밑줄은 늘 있다. 테마가 이 모양을 준다. 카드의 13px 글자 조작은 Link 가 아니라 link 모양 버튼(`variant="link"`)으로 쓴다.
-- 바깥 사이트로 가는 링크는 글자 뒤에 바깥 링크 표시를 둔다. 표시는 18 이고 글자색을 따르며, 글자와 6 떨어진다. 견본 사이드바의 '구 관리자 화면'과 서비스 상태의 UptimeRobot 링크가 쓴다.
+- 바깥 사이트로 가는 링크는 글자 뒤에 바깥 링크 표시를 둔다. 표시는 18 이고 글자색을 따르며, 글자와 6 떨어진다. 서비스 상태의 UptimeRobot 링크가 쓴다.
 - `href` 를 준 버튼(바깥 링크)은 새 탭으로 열고, 글자 뒤에 바깥 링크 표시(MUI 아이콘 `OpenInNew`)를 둔다. 접근 이름 끝에는 '새 탭에서 열림' 이 붙는다. 셸의 학생 화면 링크와 같다.
 
 user-app 의 Button 은 flowbite Button 을 감싸고 같은 모양을 Tailwind class 로 그린다.
