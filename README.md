@@ -22,19 +22,19 @@
 두 앱은 GitHub Release 에 올린 파일을 주소로 받는다. 주소에는 태그와 버전이 들어간다.
 
 ```
-https://github.com/hufs-hexagon-talent/design/releases/download/v0.2.0/studyroom-design-0.2.0.tgz
+https://github.com/hufs-hexagon-talent/design/releases/download/v0.2.1/studyroom-design-0.2.1.tgz
 ```
 
 admin-app(yarn 4):
 
 ```sh
-yarn add @studyroom/design@https://github.com/hufs-hexagon-talent/design/releases/download/v0.2.0/studyroom-design-0.2.0.tgz
+yarn add @studyroom/design@https://github.com/hufs-hexagon-talent/design/releases/download/v0.2.1/studyroom-design-0.2.1.tgz
 ```
 
 user-app(yarn 1):
 
 ```sh
-yarn add @studyroom/design@https://github.com/hufs-hexagon-talent/design/releases/download/v0.2.0/studyroom-design-0.2.0.tgz
+yarn add @studyroom/design@https://github.com/hufs-hexagon-talent/design/releases/download/v0.2.1/studyroom-design-0.2.1.tgz
 ```
 
 두 명령은 `package.json` 과 `yarn.lock` 을 함께 바꾼다. 두 파일을 같은 PR 에 넣는다. Docker 빌드의 설치 명령은 lock 이 고정한 주소와 해시를 확인해야 한다. admin-app 의 Dockerfile 은 이미 `yarn install --immutable` 을 쓴다. user-app 의 Dockerfile 은 지금 `yarn install` 을 쓴다. 그래서 user-app 에 패키지를 더하는 PR 에서 `yarn install --frozen-lockfile` 로 바꾼다.
@@ -102,6 +102,7 @@ import '@studyroom/design/tokens.css';
 - spacing 과 breakpoint 는 MUI 기본값 그대로다. spacing 은 8px 이다. breakpoint md 는 900px 이다.
 - 부품: 누를 때 물결(ripple)을 끈다. 버튼, 아이콘 버튼, 가림막, 툴팁, 입력칸, 탭, 표 칸, 메뉴, 스위치의 모양은 견본 값을 따른다.
 - 초점: 키보드 초점은 남색 2px 테두리로 보인다. 탭, 메뉴 항목, 서랍 목록, 스위치는 부모가 둘레를 잘라서 테두리를 안쪽에 긋는다.
+- hover: 버튼, 아이콘 버튼, 입력칸 선, 표 행의 hover 모양은 `@media (hover: hover)` 안에 둔다. 휴대폰 브라우저는 손가락으로 누른 요소에 hover 를 바깥을 누를 때까지 남기므로, 조건 없이 그리면 누른 버튼에 hover 면이 남는다. MUI 가 기기를 가리지 않고 칠하는 표 행의 hover 면(고른 행 포함)과, hover 가 없는 기기에서 MUI 가 자기 색으로 되돌리는 입력칸 선은 `@media (hover: none)` 에서 이 테마의 기본 모양으로 둔다. 앱이 `sx` 로 hover 를 더할 때도 `@media (hover: hover)` 안에 둔다.
 - 판: Dialog 는 모서리 14 와 overlay 그림자를 받는다. 화면을 채우는 판(`fullScreen`)은 모서리를 받지 않는다. 판의 폭은 테마가 정하지 않는다. Dialog 부품이 폭 462 를 정한다.
 - 링크: Link 는 문장 속 링크다. 글자 단계는 둘레의 글자를 따른다. 색은 주 색이고 밑줄은 늘 있다. 카드의 13px 글자 조작은 Link 가 아니라 Button `variant="link"` 로 쓴다.
 - 고리 표시: CircularProgress 는 색만 받는다. 지름, 두께, 바탕 고리는 Spinner 부품이 정한다.
@@ -191,6 +192,7 @@ body {
 | 모서리, 그림자, 글꼴 | `rounded-lg`(8), `rounded-2xl`(14), `shadow-sm`(카드), `shadow-xl`(판), `font-sans` |
 
 - preset 은 Tailwind 기존 이름의 값도 덮는다. 글자 크기(`text-xs`, `text-sm`, `text-base`, `text-lg`, `text-2xl`), 모서리(`rounded-lg`, `rounded-2xl` 은 16 에서 14 로), 그림자(`shadow-sm`, `shadow-xl`), 기본 선 색(`border` 와 preflight 의 선 색), 기본 글꼴(`font-sans` 와 `html` 의 글꼴)이 여기에 든다. 그래서 preset 을 더하면 아직 옮기지 않은 화면과 flowbite 부품도 바뀐다.
+- preset 은 Tailwind 의 `future.hoverOnlyWhenSupported` 를 켠다. `hover:` 계열 class 는 마우스처럼 hover 가 되는 기기(`(hover: hover) and (pointer: fine)`)에서만 걸린다. 이것도 옮기지 않은 화면과 flowbite 부품에 걸린다. 마우스로 보는 모양은 같고, 휴대폰에서 누른 뒤 남던 hover 모양이 사라진다. Tailwind 는 preset 의 `future` 를 키 단위로 합치므로 앱 설정에 `future` 를 두면 preset 의 값이 빠진다. 그때는 앱의 `future` 에 `hoverOnlyWhenSupported: true` 를 함께 적는다.
 - 옛 관리자 화면 다섯 곳(`/manage/facility/room`, `/manage/facility/room/:roomId`, `/manage/facility/partition`, `/manage/user-state`, `/manage/banner/manage`)은 지금도 `text-md` 를 쓴다. 지금은 Tailwind 에 그 이름이 없어서 이 class 가 아무 크기도 주지 않는다. preset 을 더하면 그 자리의 글자가 15/22 가 된다. 그래서 preset 을 처음 더하는 PR 의 전후 캡처에 이 화면들도 넣는다.
 - 글자 크기 class 는 굵기와 자간을 바꾸지 않는다. 굵기는 `font-semibold` 같은 class 로 따로 준다. 자간이 있는 단계는 `tracking-<단계>` 를 함께 준다. 예: `text-2xl tracking-title`, `text-md tracking-body`.
 - 글자 크기 이름은 t-shirt 이름만 쓴다. flowbite-react 는 class 를 합칠 때 tailwind-merge 2.2.2 를 쓴다. tailwind-merge 2.2.2 는 다른 이름(`text-meta` 등)을 글자색으로 읽는다. 그러면 같은 요소에 준 글자색 class 가 지워진다. `tracking-<단계>` 는 tailwind-merge 2.2.2 가 모르는 이름이라 그대로 남는다.
@@ -244,9 +246,9 @@ user-app 의 MUI(7)도 같은 테마를 쓸 수 있다. 앱 뿌리에 `ThemeProv
 
 ## 릴리스 절차
 
-1. PR 에서 `package.json` 의 `version` 을 올린다. 예: `npm version 0.2.1 --no-git-tag-version`.
+1. PR 에서 `package.json` 의 `version` 을 올린다. 예: `npm version 0.2.2 --no-git-tag-version`.
 2. PR 을 main 에 병합한다.
-3. 원격 main 의 병합 커밋에 태그 `vX.Y.Z` 를 달고 그 태그만 push 한다. 예: `git fetch origin && git tag v0.2.1 origin/main && git push origin v0.2.1`.
+3. 원격 main 의 병합 커밋에 태그 `vX.Y.Z` 를 달고 그 태그만 push 한다. 예: `git fetch origin && git tag v0.2.2 origin/main && git push origin v0.2.2`.
 4. CI(`.github/workflows/release.yml`)가 태그와 `version` 이 같은지 확인한다. CI 는 태그 커밋이 main 에 있는지도 확인한다. 이어서 `npm ci`, `npm test`, `npm pack` 을 돌리고 GitHub Release 를 만들어 tgz 를 올린다. Release 설명에는 tgz 의 sha1 과 sha512 가 들어간다.
 5. 두 앱의 의존성 주소를 새 태그로 바꾸고 `yarn.lock` 을 함께 갱신한다. user-app 의 lock 은 주소 끝에 `#sha1` 을 적는다. 그 값이 Release 설명의 sha1 과 같은지 확인한다.
 
@@ -270,12 +272,12 @@ npm run build   # dist 와 tokens.css 를 만든다
 npm pack --dry-run
 ```
 
-태그 전에 `npm pack` 결과를 두 앱의 사본에 설치해 확인한다. 같은 0.2.0 을 다시 빌드해 같은 경로로 `yarn add` 하면 yarn 1 은 경고 없이 옛 내용을 설치한다. yarn 1 은 같은 경로에 대해 전역 캐시의 옛 파일과 lock 의 옛 항목을 그대로 쓴다. 새 캐시 폴더(`YARN_CACHE_FOLDER`)를 주어도 lock 에 옛 항목이 있으면 옛 내용이 들어간다. 그래서 user-app 사본에는 빌드마다 파일 이름을 바꿔 설치한다.
+태그 전에 `npm pack` 결과를 두 앱의 사본에 설치해 확인한다. 같은 0.2.1 을 다시 빌드해 같은 경로로 `yarn add` 하면 yarn 1 은 경고 없이 옛 내용을 설치한다. yarn 1 은 같은 경로에 대해 전역 캐시의 옛 파일과 lock 의 옛 항목을 그대로 쓴다. 새 캐시 폴더(`YARN_CACHE_FOLDER`)를 주어도 lock 에 옛 항목이 있으면 옛 내용이 들어간다. 그래서 user-app 사본에는 빌드마다 파일 이름을 바꿔 설치한다.
 
 ```sh
-sha="$(shasum -a 1 studyroom-design-0.2.0.tgz | cut -c1-8)"
-cp studyroom-design-0.2.0.tgz "vendor/studyroom-design-0.2.0-$sha.tgz"
-yarn add "@studyroom/design@file:./vendor/studyroom-design-0.2.0-$sha.tgz"
+sha="$(shasum -a 1 studyroom-design-0.2.1.tgz | cut -c1-8)"
+cp studyroom-design-0.2.1.tgz "vendor/studyroom-design-0.2.1-$sha.tgz"
+yarn add "@studyroom/design@file:./vendor/studyroom-design-0.2.1-$sha.tgz"
 grep -A 2 '^"@studyroom/design@' yarn.lock
 ```
 
@@ -286,7 +288,8 @@ grep -A 2 '^"@studyroom/design@' yarn.lock
 - 대비: 읽는 글자 토큰이 놓이는 면에서 4.5:1 이상이다. 면은 card, subtle, page, hover, selected 다. 흰 글자는 주 색, 위험, 성공, 경고 면 위에서 잰다. inverse 글자는 inverse 면 위에서 잰다.
 - `tokens.css`: 모든 토큰 값이 정해진 이름의 변수로 들어 있다.
 - MUI: `createTheme(muiThemeOptions)` 가 MUI 9 와 MUI 7 에서 모두 테마를 만든다. 두 버전에서 부품을 서버 렌더하고 높이, 모서리, 글자 크기, 그림자를 확인한다. 아이콘 버튼의 최소 크기와 `size="large"` 의 44, 화면을 채우는 판의 모서리, body 바탕색, 안쪽 초점 테두리, 탭 밑줄의 움직임 없음, elevation 그림자가 두 값뿐인 것, Slider 손잡이에 색 고리가 없는 것, 스위치의 바탕 두 색과 손잡이 윤곽, outlined 라벨의 글자 단계와 자리, 고른 탭의 밑줄이 탭 줄 아래 선을 덮는 것도 확인한다. Slider, 스위치, outlined 라벨은 MUI 기본 테마를, 탭 줄은 0.1.0 의 짜임(뿌리의 border 로 그은 선)을 대조군으로 함께 잰다. 브라우저 환경(jsdom)에서는 버튼을 눌러도 물결이 생기지 않는지, 키보드 초점을 받은 탭의 테두리, 툴팁과 토스트가 바로 나타나는지를 확인한다.
-- Tailwind: user-app 과 같은 짜임(`theme.colors` 를 바꾼 설정)으로 Tailwind 3.4 를 돌려 class 마다 값을 확인한다.
+- hover: 테마 객체를 걸어 다니며, 조건 없는 `:hover` 가 그림자를 지우는 것 말고 색을 바꾸지 않는지 확인한다. `@media (hover: none)` 의 hover 규칙은 되돌리는 자리마다 테스트에 적어 둔 누르기 전 값(투명, 입력칸의 기본 선, MUI 가 고른 행에 칠하는 면)으로만 되돌려야 한다. 걷는 범위는 부품마다 styleOverrides, variants, defaultProps.sx 이고, 선택자는 대소문자를 가리지 않고 본다. 서버 렌더한 CSS 에서는 같은 선택자의 규칙을 MUI 의 것과 함께 문서 순서로 읽어, 기기마다 걸리는 hover 값(그 기기에 맞는 마지막 값)을 확인한다.
+- Tailwind: user-app 과 같은 짜임(`theme.colors` 를 바꾼 설정)으로 Tailwind 3.4 를 돌려 class 마다 값을 확인한다. preset 의 `future` 가 앱 설정에 합쳐져 `hover:` class 가 hover 조건 안에 서는지도 본다.
 - tailwind-merge 2.2.2: 글자 크기 class 와 글자색 class 를 함께 두어도 둘 다 남는다. `tracking-<단계>` 도 함께 남는다.
 - 타입: `test/types/consumer.tsx` 를 MUI 9 타입으로 검사한다. `variant="title"` 과 `palette.brand` 가 통과하고, 없는 variant 는 오류가 나야 한다.
 - 패키지: exports, Jest 27 용 하위 폴더(`mui/`, `tailwind/`), 루트 `tokens.css` 로 각 진입점을 찾는다. 산출 JS 에는 `@mui` 와 `react` 의 import 가 없다. 패키지 파일에 `docs` 가 들어간다.

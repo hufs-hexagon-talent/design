@@ -1,7 +1,7 @@
 import { createRequire } from 'node:module';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import postcss, { type Rule } from 'postcss';
+import postcss, { type AtRule, type Rule } from 'postcss';
 
 export const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
@@ -53,6 +53,54 @@ export function declarations(css: string, selector: string): Map<string, string>
     });
   });
   return found;
+}
+
+/**
+ * 주어진 미디어 조건(예: '(hover: hover)') 바로 안에서 선택자가 정확히 같은 규칙들의 선언을 모은다.
+ * 같은 속성은 문서 순서로 뒤의 것이 이긴다. emotion 이 줄인 공백(hover:hover)도 같은 조건으로 본다.
+ */
+export function mediaDeclarations(css: string, media: string, selector: string): Map<string, string> {
+  const found = new Map<string, string>();
+  const wanted = media.replace(/\s+/g, '');
+  postcss.parse(css).walkRules((rule: Rule) => {
+    const parent = rule.parent;
+    if (parent?.type !== 'atrule') return;
+    const at = parent as AtRule;
+    if (at.name !== 'media' || at.params.replace(/\s+/g, '') !== wanted) return;
+    if (rule.selectors.map((s) => s.trim()).join(',') !== selector) return;
+    rule.walkDecls((decl) => {
+      found.set(decl.prop, decl.value);
+    });
+  });
+  return found;
+}
+
+/**
+ * 선택자가 정확히 같은 규칙들이 그 속성에 주는 값을 문서 순서로 모은다. 최상위 규칙은 media 가 null 이다.
+ * 우선순위가 같으므로, 기기마다 걸리는 값은 그 기기에 맞는 마지막 값이다(effectiveValue).
+ */
+export function cascade(css: string, selector: string, prop: string): Array<[media: string | null, value: string]> {
+  const out: Array<[string | null, string]> = [];
+  postcss.parse(css).walkRules((rule: Rule) => {
+    const parent = rule.parent;
+    const media =
+      parent?.type === 'atrule' && (parent as AtRule).name === 'media' ? (parent as AtRule).params.replace(/\s+/g, '') : null;
+    if (parent?.type !== 'root' && media === null) return;
+    if (rule.selectors.map((s) => s.trim()).join(',') !== selector) return;
+    rule.walkDecls(prop, (decl) => {
+      out.push([media, decl.value]);
+    });
+  });
+  return out;
+}
+
+/** cascade 의 결과에서 주어진 미디어 조건(예: '(hover: none)')이 맞는 기기에 걸리는 값. */
+export function effectiveValue(
+  entries: Array<[media: string | null, value: string]>,
+  media: string,
+): string | undefined {
+  const wanted = media.replace(/\s+/g, '');
+  return entries.filter(([m]) => m === null || m === wanted).at(-1)?.[1];
 }
 
 /**

@@ -64,6 +64,7 @@ admin-app 과 user-app 은 같은 화면 규칙을 따른다. 값은 `src/tokens
 - 읽는 글자는 놓이는 면에서 대비 4.5:1 이상이다. text.disabled 는 꺼진 조작에만 쓴다.
 - 휴대폰에서 누르는 면은 44px 이상이다.
 - 키보드 초점은 남색 2px 테두리로 보인다. 누를 때 물결을 껐으므로 초점 테두리를 지우지 않는다.
+- hover 면, 선, 글자색은 마우스처럼 hover 가 되는 기기에서만 그린다. 휴대폰 브라우저는 손가락으로 누른 요소에 hover 를 바깥을 누를 때까지 남겨서, 조건 없이 그리면 누른 버튼과 행에 hover 모양이 남는다. 휴대폰에서 누른 요소는 누르기 전 모양 그대로다. MUI 테마는 hover 를 `@media (hover: hover)` 안에 두고, Tailwind preset 은 `hover:` class 를 `(hover: hover) and (pointer: fine)` 인 기기에서만 건다. 두 조건은 hover 는 되는데 포인터가 거친(pointer: coarse) 기기에서 갈린다. 그런 기기에서는 MUI 화면에만 hover 모양이 선다. MUI 자체의 hover 가 `(hover: hover)` 만 보므로 테마도 그 조건을 따른다. 부품이 hover 를 더할 때도 같은 조건 안에 둔다.
 - 아이콘만 있는 버튼에는 접근 이름을 붙인다.
 
 ## AI 티 나는 모양 금지

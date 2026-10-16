@@ -4,7 +4,7 @@
 // 타입 확장(declare module)은 이 파일 안에 둔다. 별도 .d.ts 파일에 두면 tsc 가 dist 로 옮기지 않는다.
 // 값은 모두 tokens.ts 에서 읽는다. 이 파일에는 0, none, transparent 같은 구조 값과 1px 선 두께만 둔다.
 import type { CSSProperties } from 'react';
-import type { Shadows, ThemeOptions } from '@mui/material/styles';
+import type { Shadows, Theme, ThemeOptions } from '@mui/material/styles';
 import {
   colors,
   component,
@@ -118,9 +118,37 @@ const { levels } = typography;
  */
 const labelShrinkTop = '-9px';
 const notchLead = '6px';
+/** 초점, 오류, 꺼짐이 아닌 입력칸에 올렸을 때의 테두리 선. 세 상태의 선은 각자의 규칙이 정한다. */
+const inputHoverOutline =
+  '&:hover:not(.Mui-focused):not(.Mui-error):not(.Mui-disabled) .MuiOutlinedInput-notchedOutline';
 
 const onFill = colors.inverse.text.primary;
 const hairline = (color: string) => `1px solid ${color}`;
+
+/**
+ * hover 면, 선, 글자색은 마우스처럼 hover 가 되는 기기에서만 그린다. 휴대폰 브라우저는 손가락으로 누른 요소에
+ * :hover 를 바깥을 누를 때까지 남기므로, 조건 없이 칠하면 누른 버튼에 hover 면이 남는다.
+ * MUI 버튼의 hover 도 같은 조건 안에 있다. 테마의 규칙은 MUI 의 규칙보다 뒤에 붙으므로 우선순위가 같으면 이긴다.
+ */
+const hoverDevice = '@media (hover: hover)';
+/**
+ * hover 가 없는 기기. MUI 가 조건 없이 칠하거나 자기 값으로 되돌리는 hover 를 이 테마의 기본 모양으로 되돌릴 때만 쓴다.
+ */
+const noHoverDevice = '@media (hover: none)';
+
+/**
+ * MUI 가 고른 행(selected)에 칠하는 면. 주 색에 action.selectedOpacity 를 씌운 값이다. MUI 7 은 alpha() 로,
+ * MUI 9 는 theme.alpha() 로 만드는데, 이 파일은 MUI 를 타입으로만 읽으므로 같은 값을 직접 만든다.
+ * 주 색은 tokens.ts 의 #RRGGBB 값이다.
+ */
+const selectedFill = (theme: Theme): string => {
+  if (theme.vars) {
+    return `rgba(${theme.vars.palette.primary.mainChannel} / ${theme.vars.palette.action.selectedOpacity})`;
+  }
+  const hex = theme.palette.primary.main.replace('#', '');
+  const [r, g, b] = [0, 2, 4].map((at) => parseInt(hex.slice(at, at + 2), 16));
+  return `rgba(${r}, ${g}, ${b}, ${theme.palette.action.selectedOpacity})`;
+};
 
 /**
  * 둘레가 잘리는 자리(탭 줄, 메뉴, 서랍 목록, 스위치)의 초점 테두리.
@@ -152,7 +180,7 @@ const filledButton = (fill: string, hoverFill: string) => ({
   border: hairline('transparent'),
   backgroundColor: fill,
   color: onFill,
-  '&:hover': { backgroundColor: hoverFill },
+  [hoverDevice]: { '&:hover': { backgroundColor: hoverFill } },
   '&.Mui-disabled': { backgroundColor: colors.surface.disabled, color: colors.text.disabled },
   // MUI 의 loading 은 버튼을 끈다. 진행 중에는 면과 흰 글자를 그대로 둔다(견본의 '저장 중', '반영 중').
   '&.MuiButton-loading': { backgroundColor: fill },
@@ -298,9 +326,11 @@ export const muiThemeOptions: ThemeOptions = {
                 border: hairline(colors.border.control),
                 backgroundColor: colors.surface.card,
                 color: colors.text.body,
-                '&:hover': {
-                  backgroundColor: colors.surface.subtle,
-                  borderColor: colors.border.strong,
+                [hoverDevice]: {
+                  '&:hover': {
+                    backgroundColor: colors.surface.subtle,
+                    borderColor: colors.border.strong,
+                  },
                 },
                 '&.Mui-disabled': {
                   backgroundColor: colors.surface.card,
@@ -316,9 +346,11 @@ export const muiThemeOptions: ThemeOptions = {
                 border: hairline('transparent'),
                 color: colors.text.secondary,
                 fontWeight: levels.control.fontWeight,
-                '&:hover': {
-                  backgroundColor: colors.surface.subtle,
-                  color: colors.text.primary,
+                [hoverDevice]: {
+                  '&:hover': {
+                    backgroundColor: colors.surface.subtle,
+                    color: colors.text.primary,
+                  },
                 },
                 '&.Mui-disabled': { color: colors.text.disabled },
               },
@@ -340,10 +372,12 @@ export const muiThemeOptions: ThemeOptions = {
                 fontWeight: levels.control.fontWeight,
                 color: colors.text.tertiary,
                 verticalAlign: 'baseline',
-                '&:hover': {
-                  backgroundColor: 'transparent',
-                  color: colors.brand.main,
-                  textDecoration: 'underline',
+                [hoverDevice]: {
+                  '&:hover': {
+                    backgroundColor: 'transparent',
+                    color: colors.brand.main,
+                    textDecoration: 'underline',
+                  },
                 },
                 '&.Mui-disabled': { color: colors.text.disabled },
               },
@@ -388,7 +422,8 @@ export const muiThemeOptions: ThemeOptions = {
               props: { color: 'default' },
               style: {
                 color: colors.text.secondary,
-                '&:hover': { backgroundColor: colors.surface.subtle },
+                // hover 가 없는 기기에서는 MUI 가 누른 아이콘 버튼의 면을 투명하게 되돌린다(이 테마의 기본 면도 투명이다).
+                [hoverDevice]: { '&:hover': { backgroundColor: colors.surface.subtle } },
               },
             },
           ],
@@ -532,8 +567,9 @@ export const muiThemeOptions: ThemeOptions = {
             borderColor: colors.border.control,
             padding: `0 calc(${component.input.paddingX} - ${notchLead})`,
           },
-          '&:hover:not(.Mui-focused):not(.Mui-error):not(.Mui-disabled) .MuiOutlinedInput-notchedOutline':
-            { borderColor: colors.border.strong },
+          [hoverDevice]: { [inputHoverOutline]: { borderColor: colors.border.strong } },
+          // MUI 는 hover 가 없는 기기에서 누른 입력칸의 선을 자기 기본 선 색(검정 23%)으로 되돌린다. 이 테마의 선 색으로 둔다.
+          [noHoverDevice]: { [inputHoverOutline]: { borderColor: colors.border.control } },
           '&.Mui-focused:not(.Mui-error) .MuiOutlinedInput-notchedOutline': {
             borderColor: colors.brand.main,
             borderWidth: component.focusRing.width,
@@ -656,7 +692,15 @@ export const muiThemeOptions: ThemeOptions = {
 
     MuiTableRow: {
       styleOverrides: {
-        root: { '&.MuiTableRow-hover:hover': { backgroundColor: colors.surface.hover } },
+        root: ({ theme }) => ({
+          [hoverDevice]: { '&.MuiTableRow-hover:hover': { backgroundColor: colors.surface.hover } },
+          // MUI 는 hover 행의 면(action.hover)과 고른 행(selected)의 진한 hover 면을 기기를 가리지 않고 칠한다.
+          // hover 가 없는 기기에서는 hover 행의 면을 지우고, 고른 행은 MUI 가 고른 행에 칠하는 면으로 되돌린다.
+          [noHoverDevice]: {
+            '&.MuiTableRow-hover:not(.Mui-selected):hover': { backgroundColor: 'transparent' },
+            '&.MuiTableRow-hover.Mui-selected:hover': { backgroundColor: selectedFill(theme) },
+          },
+        }),
       },
     },
 

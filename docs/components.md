@@ -122,6 +122,7 @@ DesktopOnlyNote 와 RunLock 은 admin-app 의 `src/components/step/` 에 있던 
 - 글자는 14/20, 굵기 `typography.buttonWeight`(600), 자간 -0.01em 이다.
 - 아이콘은 `component.button.iconSize`(18)이고 글자와 `component.button.iconGap`(6) 떨어진다. 글자 앞 아이콘은 내보내기 버튼(엑셀)에만 둔다.
 - 그림자, 누를 때 물결, 떠오르는 hover 가 없다.
+- 아래 표의 hover 모양은 마우스처럼 hover 가 되는 기기에서만 그린다. 휴대폰에서 손가락으로 누른 버튼은 누르기 전 모양 그대로다(docs/rules.md 의 접근성).
 - 키보드 초점은 남색 테두리다. 두께는 `component.focusRing.width`(2), 버튼과의 거리는 `component.focusRing.offset`(2)이다.
 
 모양은 역할로 고른다. 흰 글자는 `colors.inverse.text.primary` 다.
@@ -141,7 +142,7 @@ DesktopOnlyNote 와 RunLock 은 admin-app 의 `src/components/step/` 에 있던 
 - MUI 의 기본 진행 표시는 지름 16 이고 바탕 고리가 없다. 그래서 Button 부품은 `loadingIndicator` 로 Spinner 의 버튼 안 모양을 넘긴다.
 - danger 는 되돌릴 수 없는 조작의 확인 판 안에만 둔다.
 - 문장 속 링크는 MUI Link 다. 글자 단계는 둘레의 글자를 따르고, 색은 `colors.brand.main` 이며, 밑줄은 늘 있다. 테마가 이 모양을 준다. 카드의 13px 글자 조작은 Link 가 아니라 link 모양 버튼(`variant="link"`)으로 쓴다.
-- 바깥 사이트로 가는 링크는 글자 뒤에 바깥 링크 표시를 둔다. 표시는 18 이고 글자색을 따르며, 글자와 6 떨어진다. 견본 사이드바의 '구 관리자 화면'과 서비스 상태의 UptimeRobot 링크가 쓴다.
+- 바깥 사이트로 가는 링크는 글자 뒤에 바깥 링크 표시를 둔다. 표시는 18 이고 글자색을 따르며, 글자와 6 떨어진다. 서비스 상태의 UptimeRobot 링크가 쓴다.
 - `href` 를 준 버튼(바깥 링크)은 새 탭으로 열고, 글자 뒤에 바깥 링크 표시(MUI 아이콘 `OpenInNew`)를 둔다. 접근 이름 끝에는 '새 탭에서 열림' 이 붙는다. 셸의 학생 화면 링크와 같다.
 
 user-app 의 Button 은 flowbite Button 을 감싸고 같은 모양을 Tailwind class 로 그린다.
@@ -156,6 +157,8 @@ user-app 의 Button 은 flowbite Button 을 감싸고 같은 모양을 Tailwind 
 | 꺼짐 | primary, danger 는 `disabled:bg-disabled disabled:text-disabled`. secondary 는 `disabled:bg-card disabled:text-disabled disabled:border-default`. ghost, link 는 `disabled:text-disabled` |
 | 초점 | 모든 모양에 `focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand` |
 
+preset 이 Tailwind 의 `hoverOnlyWhenSupported` 를 켜므로 위의 `hover:` class 는 마우스처럼 hover 가 되는 기기(`(hover: hover) and (pointer: fine)`)에서만 걸린다. 앱 설정에 `future` 를 따로 두면 preset 의 값이 빠지므로 그때는 앱의 `future` 에 같은 값을 적는다.
+
 flowbite Button 의 기본 class 에는 `focus:outline-none` 이 있다. 그래서 초점 class 를 빼면 키보드 초점이 보이지 않는다. 휴대폰에서 누르는 버튼은 `min-h-11`(44)을 쓴다. `color="primary"` 는 남색이다.
 
 ## IconButton
@@ -166,7 +169,8 @@ flowbite Button 의 기본 class 에는 `focus:outline-none` 이 있다. 그래�
 - 아이콘은 `component.iconButton.iconSize`(20)이고 색은 `colors.text.secondary` 다.
 - 테두리 모양은 선 `colors.border.control`, 면 `colors.surface.card` 다. 운영 화면의 달 이동 화살표가 쓴다.
 - 꺼지면 아이콘 색이 `colors.text.disabled` 다.
-- hover 면은 `colors.surface.subtle` 이다. 견본에는 아이콘 버튼의 hover 그림이 없어서 ghost 버튼의 hover 면을 따랐다.
+- hover 면은 `colors.surface.subtle` 이다. 견본에는 아이콘 버튼의 hover 그림이 없어서 ghost 버튼의 hover 면을 따랐다. hover 면은 hover 가 되는 기기에서만 그린다.
+- hover 가 없는 기기에서는 MUI 가 누른 아이콘 버튼의 면을 투명하게 되돌린다. 면을 따로 주는 테두리 모양은 hover 가 없는 기기에서 그 면(`colors.surface.card`)을 다시 둔다. 그러지 않으면 누른 뒤 면이 투명해져 바닥 색이 비친다.
 - 휴대폰에서 누르는 면은 `height.buttonTouch`(44)다. MUI 에서는 `size="large"` 를 준다. 아이콘은 20 그대로다.
 - 테마는 크기를 최소값으로만 준다. 그래서 `sx` 로 안쪽 여백을 주면 누르는 면이 그만큼 커진다.
 - 접근 이름(`aria-label`)을 꼭 단다.
@@ -286,11 +290,11 @@ flowbite Button 의 기본 class 에는 `focus:outline-none` 이 있다. 그래�
 - 행을 가리키는 값(이름 등)은 `colors.text.primary`, 굵기 500 이다. 보조줄은 `typography.levels.meta`(13/18), `colors.text.tertiary` 다.
 - 이 굵기와 보조줄은 CellText 가 그린다. CellText 는 칸 글자 하나를 받는 글자 부품이다. `strong` 을 주면 행을 가리키는 값(`colors.text.primary`, 굵기 500)이 되고, `sub` 를 주면 그 아래에 보조줄을 둔 두 줄 묶음이 된다. 글자 단계와 색은 둘레의 행을 따른다. admin-app 의 화면은 lint 가 `fontWeight` 를 막으므로 굵기를 이 부품으로 준다.
 - CellText 는 글자를 말줄임으로 자르지 않는다. 행을 가리키는 값이 잘리면 비슷한 행끼리 구별되지 않는다.
-- 누를 수 있는 행은 hover 면이 `colors.surface.hover` 다. 누를 수 없는 행은 hover 면이 없다.
+- 누를 수 있는 행은 hover 면이 `colors.surface.hover` 다. 누를 수 없는 행은 hover 면이 없다. hover 면은 hover 가 되는 기기에서만 그린다.
 - 학번과 시각 같은 숫자 칸은 `font-variant-numeric: tabular-nums` 다.
 - 상태 칸은 StatusText 다.
 - 열 순서는 docs/rules.md 의 R1~R7 을 따른다.
-- MUI Table 을 쓰면 테마가 머리 글자, 행 높이 48, 행 위 선을 준다.
+- MUI Table 을 쓰면 테마가 머리 글자, 행 높이 48, 행 위 선을 준다. `hover` 를 준 MUI TableRow 의 hover 면도 테마가 준다. MUI 는 이 면과 고른 행(selected)의 진한 hover 면을 기기를 가리지 않고 칠한다. 그래서 테마가 hover 가 없는 기기에서는 hover 면을 지우고, 고른 행은 MUI 가 고른 행에 칠하는 면으로 되돌린다.
 
 user-app 의 Table 은 머리에 `text-2xs font-semibold text-tertiary pb-2` 를, 행에 `h-12 border-t border-subtle text-md tracking-body text-body` 를 쓴다.
 
@@ -301,7 +305,7 @@ user-app 의 Table 은 머리에 `text-2xs font-semibold text-tertiary pb-2` 를
 - 줄마다 위에 1px `colors.border.subtle` 선을 긋는다.
 - 한 줄 글자는 `typography.levels.body`(15/22)다.
 - 두 줄일 때 윗줄은 14/20, 굵기 500, `colors.text.primary` 이고, 아랫줄은 13/18 `colors.text.tertiary` 다.
-- 누를 수 있는 줄은 hover 면이 `colors.surface.hover` 다.
+- 누를 수 있는 줄은 hover 면이 `colors.surface.hover` 다. hover 면은 hover 가 되는 기기에서만 그린다.
 - 눌러서 상세로 가는 줄은 끝에 오른쪽 화살표(20, `colors.text.disabled`)를 둔다. 학생 앱의 문의 목록이 쓴다.
 - 누를 수 있는 줄의 키보드 초점 테두리는 줄 안쪽에 긋는다. MUI ListItemButton 과 MenuItem 은 테마가 이 테두리를 준다.
 
@@ -334,7 +338,7 @@ user-app 의 Table 은 머리에 `text-2xs font-semibold text-tertiary pb-2` 를
 쓰는 자리: 표 카드 안 탭 아래의 검색 줄.
 
 - 높이는 `height.input`(40)이고 모서리는 `radius.control`(8)이다.
-- 선은 1px `colors.border.control` 이다. hover 에서는 `colors.border.strong`, 초점에서는 `colors.brand.main` 2px 다.
+- 선은 1px `colors.border.control` 이다. hover 에서는 `colors.border.strong`, 초점에서는 `colors.brand.main` 2px 다. hover 선은 hover 가 되는 기기에서만 그린다. hover 가 없는 기기에서는 MUI 가 누른 입력칸의 선을 자기 색으로 되돌리므로, 테마가 그 선을 `colors.border.control` 로 둔다.
 - 면은 `colors.surface.card` 이고 좌우 안쪽 여백은 `component.input.paddingX`(12)다.
 - 앞에 돋보기 아이콘(20, `colors.text.tertiary`)을 두고 글자와 `component.input.adornmentGap`(8) 띄운다.
 - 입력 글자는 `typography.levels.body`(15/22), `colors.text.body` 다. 안내 글자(placeholder)는 `colors.text.tertiary` 다. 예: '이름 또는 학번'.
