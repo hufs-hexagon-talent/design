@@ -21,6 +21,7 @@ admin-app 은 부품을 `src/ui/` 에 파일 하나에 하나씩 둔다. 이 폴
 | SidePanel | `src/ui/SidePanel.tsx` | 없음 |
 | TableHead | `src/ui/TableHead.tsx` | `src/components/ui/Table.jsx` |
 | TableRow | `src/ui/TableRow.tsx` | `src/components/ui/Table.jsx` |
+| CellText | `src/ui/CellText.tsx` | 없음 |
 | ListRow | `src/ui/ListRow.tsx` | 없음 |
 | FactList | `src/ui/FactList.tsx` | 없음 |
 | FilterTabs | `src/ui/FilterTabs.tsx` | 없음 |
@@ -28,7 +29,7 @@ admin-app 은 부품을 `src/ui/` 에 파일 하나에 하나씩 둔다. 이 폴
 | ResultCount | `src/ui/ResultCount.tsx` | 없음 |
 | EmptyState | `src/ui/EmptyState.tsx` | 없음 |
 | Spinner | `src/ui/Spinner.tsx` | 없음 |
-| useToast | `src/ui/useToast.tsx` | 없음 |
+| useToast | `src/ui/useToast.ts`, `src/ui/ToastProvider.tsx` | 없음 |
 | StatusText | `src/ui/StatusText.tsx` | 없음 |
 | StatusDot | `src/ui/StatusDot.tsx` | 없음 |
 | ChoiceGroup | `src/ui/ChoiceGroup.tsx` | 없음 |
@@ -88,7 +89,7 @@ DesktopOnlyNote 와 RunLock 은 admin-app 의 `src/components/step/` 에 있던 
 
 - 면은 `colors.surface.subtle` 이고 모서리는 `radius.control`(8)이다.
 - 안쪽 여백은 `component.notice`(위아래 12, 좌우 16)다.
-- 글자는 14/20(`typography.levels.control` 의 크기), 굵기 400 이고 색은 `colors.text.body` 다.
+- 글자는 `typography.levels.control` 의 크기와 자간(14/20, -0.01em)을 따르고 굵기는 400 이다. 색은 `colors.text.body` 다.
 - tone 은 neutral, success, danger, warning 이다. tone 은 글자색만 `colors.status` 의 색으로 바꾼다.
 - 왼쪽 색 띠, 색 바탕, 선, 아이콘을 두지 않는다.
 - 닫을 수 있는 알림은 오른쪽 끝에 닫기 IconButton 을 둔다.
@@ -99,7 +100,12 @@ DesktopOnlyNote 와 RunLock 은 admin-app 의 `src/components/step/` 에 있던 
 쓰는 자리: 화면 제목 옆의 설명. 예: 명단 반영 화면의 '전체 재학생 명단을 올려 주세요. 일부 학생만 담긴 파일을 쓰면 나머지 계정이 만료됩니다.'
 
 - 버튼은 i 아이콘 하나다. 크기는 `component.iconButton.size`(32), 아이콘은 `component.iconButton.iconSize`(20), 모서리는 `radius.control`(8), 색은 `colors.text.tertiary` 다.
-- 설명은 마우스를 올리거나 키보드 초점을 줄 때만 보인다. 설명을 화면에 늘 펼쳐 두지 않는다.
+- 설명은 마우스를 올리거나, 키보드 초점을 주거나, 버튼을 누를 때 보인다. 설명을 화면에 늘 펼쳐 두지 않는다.
+- 마우스를 올리거나 키보드 초점을 주어 연 설명은 마우스가 떠나거나, 초점이 빠지거나, Esc 를 누르면 닫힌다.
+- 손가락이나 마우스로 버튼을 누르면 설명은 바깥을 누르거나 Esc 를 누를 때까지 남는다. 마우스가 떠나거나 버튼의 초점이 빠져도 닫히지 않는다. 키보드(Enter, Space)로 누른 것은 남기지 않으므로, 그 설명은 초점이 빠지면 닫힌다.
+- 풍선을 누른 것은 풍선이 받는다. 그래서 풍선 아래의 조작이 함께 눌리지 않는다. 손가락이나 마우스로 눌러 연 설명과 마우스를 올려 연 설명은 풍선을 눌러도 닫히지 않는다.
+- 설명은 한 번에 하나만 열린다. 다른 설명을 열면 열려 있던 설명이 닫힌다. 눌러 연 설명은 마우스가 떠나도 남으므로 이렇게 하지 않으면 풍선 둘이 함께 열린다.
+- 휴대폰에서는 버튼을 눌러 연다. MUI Tooltip 의 손가락 열기는 쓰지 않는다. 그 열기는 짧게 누르면 열리지 않고, 손을 떼면 1.5초 뒤에 닫힌다.
 - 설명 풍선은 MUI Tooltip 이다. 면은 `colors.surface.inverse` 이고 글자는 흰색(`colors.inverse.text.primary`)이다.
 - 풍선 글자는 `typography.levels.meta`(13/18, 400)다. 안쪽 여백은 `component.tooltip`(위아래 8, 좌우 12)이고 모서리는 `radius.control`(8)이다.
 - 풍선의 최대 폭은 `component.tooltip.maxWidth`(300)이고 `word-break: keep-all` 이다.
@@ -111,6 +117,7 @@ DesktopOnlyNote 와 RunLock 은 admin-app 의 `src/components/step/` 에 있던 
 
 - 높이는 `height.button`(36)이다. 표 안의 버튼은 `height.buttonSmall`(32), 글자 13/18, 좌우 12 다.
 - 휴대폰에서 누르는 버튼은 `height.buttonTouch`(44), 글자 15/22, 좌우 22 다.
+- link 모양은 좁은 폭에서 높이 `height.buttonTouch`(44)다. 글자가 짧아도 누르는 면이 가로 44 이상이 되도록 보이지 않는 면을 넓힌다. 글자 자리는 그대로다.
 - 모서리는 `radius.control`(8)이다. 좌우 안쪽 여백은 `component.button.paddingX`(16)다.
 - 글자는 14/20, 굵기 `typography.buttonWeight`(600), 자간 -0.01em 이다.
 - 아이콘은 `component.button.iconSize`(18)이고 글자와 `component.button.iconGap`(6) 떨어진다. 글자 앞 아이콘은 내보내기 버튼(엑셀)에만 둔다.
@@ -135,6 +142,7 @@ DesktopOnlyNote 와 RunLock 은 admin-app 의 `src/components/step/` 에 있던 
 - danger 는 되돌릴 수 없는 조작의 확인 판 안에만 둔다.
 - 문장 속 링크는 MUI Link 다. 글자 단계는 둘레의 글자를 따르고, 색은 `colors.brand.main` 이며, 밑줄은 늘 있다. 테마가 이 모양을 준다. 카드의 13px 글자 조작은 Link 가 아니라 link 모양 버튼(`variant="link"`)으로 쓴다.
 - 바깥 사이트로 가는 링크는 글자 뒤에 바깥 링크 표시를 둔다. 표시는 18 이고 글자색을 따르며, 글자와 6 떨어진다. 견본 사이드바의 '구 관리자 화면'과 서비스 상태의 UptimeRobot 링크가 쓴다.
+- `href` 를 준 버튼(바깥 링크)은 새 탭으로 열고, 글자 뒤에 바깥 링크 표시(MUI 아이콘 `OpenInNew`)를 둔다. 접근 이름 끝에는 '새 탭에서 열림' 이 붙는다. 셸의 학생 화면 링크와 같다.
 
 user-app 의 Button 은 flowbite Button 을 감싸고 같은 모양을 Tailwind class 로 그린다.
 
@@ -176,6 +184,8 @@ flowbite Button 의 기본 class 에는 `focus:outline-none` 이 있다. 그래�
 - 버튼 줄은 오른쪽에 붙인다. 버튼 사이는 `space.controlGap`(8)이고 버튼 줄의 안쪽 여백은 24 다.
 - 버튼 위 선, 위 색 띠, 닫기 아이콘을 두지 않는다.
 - 진행 중에는 Esc, 가림막 누름, 취소로 판이 닫히지 않는다. 판을 닫는 처리(onClose) 한 곳에서 막는다.
+- 판 자체에 초점이 있을 때 Tab 은 판 안의 첫 조작으로, Shift+Tab 은 끝 조작으로 간다. 갈 조작이 없으면(진행 중에 모두 꺼진 판) 초점은 판에 남는다.
+- 판은 탭 정지가 아니다. 그래서 진행 중에도 켜진 입력칸이 남은 판에서는 Tab 이 판에 서지 않고 그 입력칸으로 간다.
 - MUI 의 Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions 를 쓰면 테마가 모서리, 그림자, 가림막, 제목, 한 줄, 버튼 줄의 값을 준다.
 - 화면을 채우는 판(`fullScreen`)에는 테마가 모서리를 주지 않는다.
 
@@ -195,7 +205,7 @@ flowbite Button 의 기본 class 에는 `focus:outline-none` 이 있다. 그래�
 - 제목 아래 한 줄은 '되돌릴 수 없습니다.' 다. 되돌리기를 확인하는 판은 '다시 되돌릴 수 없습니다.' 다.
 - 한 줄의 문장은 부품이 정한다. 기본은 '되돌릴 수 없습니다.' 이고, 되돌리기 판은 속성 하나로 '다시 되돌릴 수 없습니다.' 를 고른다.
 - 버튼은 [취소] 와 붉은 조작 버튼 둘이다. 취소는 secondary 모양이다. 조작 버튼은 danger 모양이고 글자는 짧은 조작 이름이다. 예: '반영', '되돌리기'.
-- 조작 버튼의 최소 폭은 `component.dialog.actionMinWidth`(96)다. 그래서 진행 중과 꺼짐에서도 두 버튼 자리가 그대로다.
+- 조작 버튼의 폭은 조작 이름과 진행 중 모양(도는 표시와 글자) 가운데 넓은 쪽이고, 최소 `component.dialog.actionMinWidth`(96)다. 그래서 진행 중과 꺼짐에서도 두 버튼 자리가 그대로다.
 - 붉은 것은 조작 버튼 하나다.
 - 대상 상자, 결과 문장, 운영 문장, 복구 문장, 위 색 띠, 버튼 위 선, 닫기 아이콘을 두지 않는다.
 - 뒤 화면(카드와 머리)에 이미 보이는 대상과 수를 판에 다시 적지 않는다.
@@ -215,7 +225,9 @@ flowbite Button 의 기본 class 에는 `focus:outline-none` 이 있다. 그래�
 - 판에 `aria-busy` 를 단다.
 - 취소는 꺼진 secondary 모양(면 `colors.surface.card`, 글자 `colors.text.disabled`, 선 `colors.border.default`)이 된다.
 - Esc, 가림막, 취소로 판이 닫히지 않는다.
-- 조작 버튼은 같은 96 폭에서 도는 표시와, 조작 이름 뒤에 '중'을 붙인 글자를 보인다. 예: '반영 중'.
+- 조작 버튼은 같은 폭에서 도는 표시와, 조작 이름 뒤에 '중'을 붙인 글자를 보인다. 예: '반영 중'.
+- 진행 중이 되면 초점은 붉은 버튼에 있든 취소에 있든 판 자체로 간다. 진행 중에는 두 버튼 모두 누를 수 없어 초점을 받지 못한다.
+- 진행 중에는 판 안에 Tab 으로 갈 조작이 없어서 Tab 을 눌러도 초점이 판에 남는다.
 - 뒤 화면의 조작도 꺼진다. RunLock 이 앱 안 이동을 막는다.
 - 끝나면 판이 닫히고, 화면의 Notice 가 결과를 말한다. 판 안에는 오류를 적지 않는다.
 
@@ -224,6 +236,7 @@ flowbite Button 의 기본 class 에는 `focus:outline-none` 이 있다. 그래�
 - 판이 열린 동안 조작할 수 없게 되면 판은 닫히지 않는다. 한 줄 자리만 이유 문장으로 바뀐다.
 - 조작 버튼은 같은 폭의 꺼진 모양(면 `colors.surface.disabled`, 글자 `colors.text.disabled`)이 된다.
 - 조작 버튼은 `aria-describedby` 로 그 줄을 가리킨다. 그 줄은 `aria-live="polite"` 라서 바뀌면 읽힌다.
+- 붉은 버튼에 초점이 있는 채 막히면 초점은 취소로 간다.
 - 조작 버튼을 누르는 순간에도 조건을 다시 확인한다. 막혔으면 요청을 보내지 않고 같은 막힘으로 바꾼다.
 - 판이 열린 동안 뒤 카드의 이유 줄은 그리지 않는다. 같은 문장이 가림막 앞뒤에 두 번 서지 않게 한다.
 - 다시 확인하는 버튼은 판에 두지 않는다. 취소로 닫고 화면의 새로고침을 누른다.
@@ -233,10 +246,14 @@ flowbite Button 의 기본 class 에는 `focus:outline-none` 이 있다. 그래�
 
 - 학기 생성 되돌리기(이력 행)는 판을 열 때 미리보기를 받는다.
 - 받는 동안 한 줄 자리에 Spinner 고리와 '조회 중'을 두고, 붉은 버튼은 꺼진다.
+- 한 줄 자리의 높이는 받는 동안에도 `typography.levels.body` 의 줄 높이(22)다. 그래서 받기가 끝나 문장으로 바뀌어도 아래가 움직이지 않는다.
 - 예약이 되돌리기를 막으면 한 줄 자리에 '운영 시간 밖에 남는 예약이 있습니다.' 를 둔다. 그 바로 아래에 두 줄 행을 늘어놓는다.
-- 행의 윗줄은 날짜, 시간, 호실이고 14/20 `colors.text.primary` 다. 아랫줄은 학생 이름과 학번이고 13/18 `colors.text.tertiary` 다. 행 사이 선은 `colors.border.subtle` 이다.
+- 행의 윗줄은 날짜, 시간, 호실이고 14/20, 굵기 500, `colors.text.primary` 다. 아랫줄은 학생 이름과 학번이고 13/18 `colors.text.tertiary` 다. 행 사이 선은 `colors.border.subtle` 이다.
 - 표 머리, 상태 열, 개수 제목, 상자는 두지 않는다. 행은 글자만이다.
-- 다섯 줄을 넘으면 목록만 판 안에서 굴린다.
+- 목록의 높이는 두 줄 행 다섯 개(`height.rowTwoLine` 의 다섯 배)까지다. 다섯 줄을 넘거나 글자가 길어 이 높이를 넘치면 목록만 판 안에서 굴린다.
+- 굴리는 목록은 키보드 초점을 받는다. 그래서 키보드로도 굴릴 수 있다. 목록의 접근 이름은 한 줄 자리의 문장이다.
+- 목록의 초점 테두리는 남색 2px 이고 목록 안쪽에 긋는다. 판 본문이 목록 아래를 잘라서 바깥에 그으면 아랫변이 보이지 않는다.
+- 다섯 줄 이하의 목록은 넘치지 않으면 초점을 받지 않는다. 그 목록에 초점이 있는 채 목록이 넘치지 않게 되면(창 폭이 넓어져 감겼던 행의 글자가 펴질 때) 초점은 취소로 간다.
 - 판 위에 회원 서랍을 겹쳐 열지 않는다.
 - 다시 확인하려면 판을 닫고 다시 연다. 판을 열 때마다 미리보기를 새로 받으므로 판 안에 새로고침을 두지 않는다.
 
@@ -267,6 +284,8 @@ flowbite Button 의 기본 class 에는 `focus:outline-none` 이 있다. 그래�
 - 행마다 위에 1px `colors.border.subtle` 선을 긋는다.
 - 행 글자는 `typography.levels.body`(15/22)이고 색은 `colors.text.body` 다.
 - 행을 가리키는 값(이름 등)은 `colors.text.primary`, 굵기 500 이다. 보조줄은 `typography.levels.meta`(13/18), `colors.text.tertiary` 다.
+- 이 굵기와 보조줄은 CellText 가 그린다. CellText 는 칸 글자 하나를 받는 글자 부품이다. `strong` 을 주면 행을 가리키는 값(`colors.text.primary`, 굵기 500)이 되고, `sub` 를 주면 그 아래에 보조줄을 둔 두 줄 묶음이 된다. 글자 단계와 색은 둘레의 행을 따른다. admin-app 의 화면은 lint 가 `fontWeight` 를 막으므로 굵기를 이 부품으로 준다.
+- CellText 는 글자를 말줄임으로 자르지 않는다. 행을 가리키는 값이 잘리면 비슷한 행끼리 구별되지 않는다.
 - 누를 수 있는 행은 hover 면이 `colors.surface.hover` 다. 누를 수 없는 행은 hover 면이 없다.
 - 학번과 시각 같은 숫자 칸은 `font-variant-numeric: tabular-nums` 다.
 - 상태 칸은 StatusText 다.
@@ -281,7 +300,7 @@ user-app 의 Table 은 머리에 `text-2xs font-semibold text-tertiary pb-2` 를
 
 - 줄마다 위에 1px `colors.border.subtle` 선을 긋는다.
 - 한 줄 글자는 `typography.levels.body`(15/22)다.
-- 두 줄일 때 윗줄은 14/20 `colors.text.primary`, 아랫줄은 13/18 `colors.text.tertiary` 다.
+- 두 줄일 때 윗줄은 14/20, 굵기 500, `colors.text.primary` 이고, 아랫줄은 13/18 `colors.text.tertiary` 다.
 - 누를 수 있는 줄은 hover 면이 `colors.surface.hover` 다.
 - 눌러서 상세로 가는 줄은 끝에 오른쪽 화살표(20, `colors.text.disabled`)를 둔다. 학생 앱의 문의 목록이 쓴다.
 - 누를 수 있는 줄의 키보드 초점 테두리는 줄 안쪽에 긋는다. MUI ListItemButton 과 MenuItem 은 테마가 이 테두리를 준다.
@@ -301,13 +320,14 @@ user-app 의 Table 은 머리에 `text-2xs font-semibold text-tertiary pb-2` 를
 - 탭 높이는 `height.tab`(44)이다. 탭 좌우 여백은 `component.tab.paddingX`(14), 탭 사이는 `component.tab.gap`(4)이다.
 - 탭 글자는 14/20, 500 이고 색은 `colors.text.secondary` 다. 고른 탭은 `colors.text.primary`, 600 이다.
 - 고른 탭의 밑줄은 두께 `component.tab.indicatorHeight`(2), 색 `colors.brand.main` 이다. 밑줄은 탭 양 끝에서 `component.tab.indicatorInset`(8)씩 들인다.
-- 탭 줄 아래에는 1px `colors.border.subtle` 선을 긋는다.
+- 탭 줄 아래에는 1px `colors.border.subtle` 선을 긋는다. 고른 탭의 밑줄은 그 선 위에 겹쳐 선을 덮는다. 탭 줄의 높이는 탭 44 와 선 1 을 더한 45 다.
 - 탭 이름 뒤에 `component.tab.countGap`(6) 띄워 개수를 둔다. 개수 색은 `colors.text.tertiary` 이고 숫자는 `tabular-nums` 다. 개수를 굵게 하거나 색으로 칠하지 않는다.
 - 탭은 하나만 고른다. 고른 탭은 주소에 남겨, 상세에 갔다 돌아와도 유지한다.
 - 탭 줄 아래 여백은 `space.inCard`(16)다.
 - 밑줄은 탭 사이를 미끄러지지 않고 고른 탭으로 바로 옮겨 간다.
 - 키보드 초점 테두리는 탭 안쪽에 긋는다. 탭 줄이 둘레를 잘라서 바깥 테두리는 보이지 않는다.
-- MUI Tabs 와 Tab 을 쓰면 테마가 높이, 글자, 밑줄, 초점 테두리를 준다.
+- MUI Tabs 와 Tab 을 쓰면 테마가 높이, 글자, 밑줄, 탭 줄 아래 선, 초점 테두리를 준다.
+- Tabs 에 아래 선(`borderBottom`)을 따로 주지 않는다. 테마의 선 아래에 선이 한 줄 더 생기고, 밑줄은 그 줄을 덮지 못한다.
 
 ## SearchField
 
@@ -337,7 +357,7 @@ user-app 의 TextInput 은 같은 입력칸 모양이다. class 는 `h-10 rounde
 
 쓰는 자리: 표와 목록이 비었을 때.
 
-- 글자는 14/20 이고 색은 `colors.text.body` 다. 위아래 여백은 8 이다.
+- 글자는 `typography.levels.control` 의 크기와 자간(14/20, -0.01em)을 따르고 굵기는 400 이다. 색은 `colors.text.body` 다. 위아래 여백은 8 이다.
 - 조건 한 문장만 적는다. 예: '이 날 예약이 없습니다.'
 - 아이콘과 그림을 두지 않는다. user-app 의 Boo 그림은 남긴다.
 
@@ -347,7 +367,8 @@ user-app 의 TextInput 은 같은 입력칸 모양이다. class 는 `h-10 rounde
 
 - 고리는 지름 `component.spinner.size`(20), 두께 `component.spinner.thickness`(2.5)다.
 - 고리의 바탕은 `colors.brand.subtle` 이고 도는 호는 `colors.brand.main` 이다.
-- 고리 옆에 '조회 중'을 `typography.levels.meta`, `colors.text.tertiary` 로 둔다.
+- 고리 옆에 '조회 중'을 `typography.levels.meta`, `colors.text.tertiary` 로 둔다. 고리와 글자 사이는 `space.controlGap`(8)이다.
+- 조회 중 표시의 고리는 돌아도 놓인 상자 밖으로 넘치지 않는다. 고리의 네모 자리가 돌며 모서리가 밖으로 나가므로, 고리와 글자를 묶은 자리가 넘침을 자른다. 고리는 그 네모 안의 원이라 돌아도 모양이 잘리지 않는다. 자르지 않으면 둘레의 굴리는 상자(판 본문 등)가 넘쳐 키보드 초점을 받는다.
 - 버튼 안의 표시는 Button 의 진행 중 모양을 따른다.
 - 접근 이름을 단다. 예: '조회 중'.
 - MUI CircularProgress 는 테마가 색(`colors.brand.main`)만 준다. 지름, 두께, 바탕 고리는 Spinner 가 정한다.
@@ -356,11 +377,11 @@ user-app 의 TextInput 은 같은 입력칸 모양이다. class 는 `h-10 rounde
 
 쓰는 자리: 저장처럼 짧은 결과 알림. 예: '저장했습니다'.
 
-- 면은 `colors.surface.inverse` 이고 글자는 흰색 14/20, 굵기 400 이다.
+- 면은 `colors.surface.inverse` 이고 글자는 흰색이다. 글자는 `typography.levels.control` 의 크기와 자간(14/20, -0.01em)을 따르고 굵기는 400 이다.
 - 안쪽 여백은 `component.toast`(위아래 10, 좌우 16)이고 모서리는 `radius.control`(8)이다.
 - 그림자는 `shadow.overlay` 다.
 - 아이콘을 두지 않는다.
-- 토스트 자리는 앱 안에서 한 곳이다.
+- 토스트 자리는 앱 안에서 한 곳이다. 앱 뿌리와 테스트 wrapper 에 ToastProvider 를 두고, 화면은 useToast 가 돌려주는 함수로 메시지를 띄운다. ToastProvider 가 없으면 useToast 가 오류를 던진다.
 - 토스트 안의 글자에 Typography variant 를 쓰면 글자색을 `colors.inverse.text` 로 다시 준다.
 - MUI SnackbarContent 를 쓰면 테마는 그림자만 준다. 면, 글자, 여백, 모서리는 useToast 가 정한다.
 
@@ -400,7 +421,7 @@ user-app 의 TextInput 은 같은 입력칸 모양이다. class 는 `h-10 rounde
 쓰는 자리: 오래 걸리는 조작이 끝날 때까지 앱 안 이동을 막는다. 운영 화면과 ConfirmDialog 의 진행 중에 쓴다.
 
 - 이동을 막을 때 Dialog 모양의 판을 띄운다. 판의 버튼은 '닫기' 하나다.
-- 판의 글자는 14/20 `colors.text.body` 한 줄이다.
+- 판의 글자는 한 줄이다. 글자는 `typography.levels.control` 의 크기와 자간(14/20, -0.01em)을 따르고 굵기는 400, 색은 `colors.text.body` 다.
 
 ## user-app 의 판
 

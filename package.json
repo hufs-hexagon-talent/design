@@ -1,9 +1,9 @@
 {
   "name": "@studyroom/design",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Studyroom reservation design tokens: JS tokens, Tailwind 3 preset, MUI ThemeOptions, CSS custom properties",
-  "license": "UNLICENSED",
+  "license": "MIT",
   "repository": "github:hufs-hexagon-talent/design",
   "main": "./dist/cjs/index.js",
   "module": "./dist/esm/index.js",

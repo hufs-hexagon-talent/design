@@ -491,6 +491,141 @@ describe.each(versions)('%s', (_label, mui, pkg, major) => {
     expect(paperShadow('Card', 0)).toBe('none');
   });
 
+  it('Switch 는 견본의 바탕 두 색과 손잡이 윤곽을 갖는다', () => {
+    const parts = (theme: unknown, props: Record<string, unknown>) => {
+      const html = render(mui, (m) => h(m.Switch, props), theme);
+      return {
+        css: styleText(html),
+        thumb: `.${emotionClass(html, 'MuiSwitch-thumb')}`,
+        track: `.${emotionClass(html, 'MuiSwitch-track')}`,
+        base: `.${emotionClass(html, 'MuiSwitch-switchBase')}`,
+      };
+    };
+
+    // 대조군: MUI 기본 테마의 손잡이는 elevation 1 그림자이고 꺼진 바탕은 검정을 0.38 로 옅게 깐다. 이 테마의
+    // elevation 1 은 거의 보이지 않는 카드 그림자라서, 손잡이 윤곽을 따로 주지 않으면 흰 카드 위에서 사라진다.
+    const plain = parts(mui.createTheme(), {});
+    expect(lastValue(plain.css, plain.thumb, 'box-shadow')).toMatch(/rgba\(0,\s*0,\s*0,\s*0\.2\)/);
+    expect(lastValue(plain.css, plain.track, 'opacity')).toBe('0.38');
+
+    const off = parts(undefined, {});
+    expect(squash(lastValue(off.css, off.thumb, 'box-shadow'))).toBe(squash(component.switch.thumbShadow));
+    expect(lastValue(off.css, off.track, 'background-color')).toBe(component.switch.trackOff);
+    expect(lastValue(off.css, off.track, 'opacity')).toBe('1');
+
+    // 켜진 바탕은 MUI 가 '.Mui-checked + 바탕' 으로 칠한다. 테마 규칙이 같은 선택자로 뒤에 와서 이긴다.
+    const on = parts(undefined, { defaultChecked: true });
+    const checkedTrack = `${on.base}.Mui-checked+.MuiSwitch-track`;
+    expect(lastValue(on.css, checkedTrack, 'background-color')).toBe(component.switch.trackOn);
+    expect(lastValue(on.css, checkedTrack, 'opacity')).toBe('1');
+
+    // 꺼진 스위치의 옅은 바탕은 MUI 기본 그대로다(더 높은 우선순위의 '.Mui-disabled + 바탕').
+    const disabled = parts(undefined, { disabled: true });
+    expect(lastValue(disabled.css, `${disabled.base}.Mui-disabled+.MuiSwitch-track`, 'opacity')).toBe('0.12');
+  });
+
+  it('outlined 라벨은 입력 글자와 같은 단계라 테두리 틈과 폭이 맞고, 입력 글자의 안쪽 여백에 선다', () => {
+    const field = (theme: unknown, props: Record<string, unknown>) => {
+      const html = render(mui, (m) => h(m.TextField, { label: '이름', ...props }), theme);
+      const css = styleText(html);
+      return {
+        css,
+        label: `.${emotionClass(html, ['MuiInputLabel-root', 'MuiInputLabel-outlined'])}`,
+        input: `.${emotionClass(html, 'MuiOutlinedInput-root')}`,
+      };
+    };
+
+    // 대조군: MUI 기본 라벨은 16px 이고 입력 글자도 16px 이다. 이 테마는 입력 글자를 15px 로 바꾸므로 라벨도 함께
+    // 바꾸지 않으면 줄어든 라벨(16 의 0.75배)이 틈(15 의 0.75배)보다 넓어 선이 라벨 끝을 가로지른다.
+    const plain = field(mui.createTheme(), {});
+    expect(lastValue(plain.css, plain.label, 'font-size')).toBe('1rem');
+
+    const empty = field(undefined, {});
+    expect(lastValue(empty.css, empty.label, 'font-size')).toBe(levels.body.fontSize);
+    expect(lastValue(empty.css, `${empty.input}`, 'font-size')).toBe(levels.body.fontSize);
+    expect(lastValue(empty.css, empty.label, 'transform')).toBe(
+      `translate(${component.input.paddingX}, calc((${height.input} - ${levels.body.lineHeight}) / 2)) scale(1)`,
+    );
+
+    const filled = field(undefined, { defaultValue: '김민준' });
+    expect(lastValue(filled.css, filled.label, 'transform')).toBe(`translate(${component.input.paddingX}, -9px) scale(0.75)`);
+    // 틈은 라벨보다 6 앞에서 시작한다(MUI 기본의 라벨 14, 틈 8 과 같은 사이).
+    expect(lastValue(filled.css, `${filled.input} .MuiOutlinedInput-notchedOutline`, 'padding')).toBe(
+      `0 calc(${component.input.paddingX} - 6px)`,
+    );
+  });
+
+  it('탭 줄: 고른 탭의 밑줄이 탭 줄 아래 선을 덮고, 줄 높이는 탭 44 와 선 1 을 더한 45 다', () => {
+    // 탭 줄을 세로로 잰다(위가 0, 단위 px). 마운트 뒤 MUI 는 밑줄(indicator)을 scroller 의 자식으로 두고 scroller
+    // 안쪽의 bottom 에 세운다. 서버 렌더에서는 밑줄이 아직 고른 탭 안에 있지만 값은 같은 규칙에서 읽는다.
+    // scroller 와 뿌리는 overflow 를 숨기므로 밑줄은 scroller 안쪽에서만 보이고, 그 밖에 붙는 뿌리의 border 는 덮지 못한다.
+    const measure = (theme: unknown, props: Record<string, unknown> = {}) => {
+      const html = render(
+        mui,
+        (m) => h(m.Tabs, { value: 0, ...props }, h(m.Tab, { label: '재학생' }), h(m.Tab, { label: '만료' })),
+        theme,
+      );
+      const css = styleText(html);
+      const read = (muiClass: string, prop: string) => lastValue(css, `.${emotionClass(html, muiClass)}`, prop);
+      const px = (value: string | undefined) => (value === undefined ? 0 : Number.parseFloat(value));
+      // scroller 안쪽의 아래 끝. 탭 높이에 scroller 의 아래 여백을 더한다. 뿌리에는 여백이 없어 뿌리 안쪽의 아래 끝도 같다.
+      const inner = px(read('MuiTab-root', 'height')) + px(read('MuiTabs-scroller', 'padding-bottom'));
+      // 선이 뿌리의 border 면 그 아래 끝의 바깥에, 뿌리 안쪽의 아래 그림자면 그 아래 끝의 안쪽에 선다.
+      const border = read('MuiTabs-root', 'border-bottom')?.match(/^(\d+)px solid (\S+)$/);
+      const inset = read('MuiTabs-root', 'box-shadow')?.match(/^inset 0 -(\d+)px 0 (\S+)$/);
+      const outside = border ? Number(border[1]) : 0;
+      const line = border
+        ? { top: inner, bottom: inner + outside, color: border[2] }
+        : inset
+          ? { top: inner - Number(inset[1]), bottom: inner, color: inset[2] }
+          : null;
+      const lift = px(read('MuiTabs-indicator', 'bottom'));
+      const underline = { top: inner - lift - px(read('MuiTabs-indicator', 'height')), bottom: inner - lift };
+      return {
+        height: inner + outside,
+        line,
+        underline,
+        covered: line !== null && underline.top <= line.top && line.bottom <= underline.bottom,
+      };
+    };
+    const tab = Number.parseFloat(height.tab);
+    const bar = Number.parseFloat(component.tab.indicatorHeight);
+    const line = { top: tab, bottom: tab + 1, color: colors.border.subtle };
+
+    // 대조군: 옛 짜임(0.1.0)은 선을 뿌리의 border 로 그었다. 밑줄(42~44)은 탭 안에 서고 선(44~45)은 scroller 밖에
+    // 남아서, 밑줄이 선 위 1px 에 뜨고 그 아래 옅은 선이 보였다.
+    const tabsOptions = muiThemeOptions.components?.MuiTabs;
+    const old = mui.createTheme({
+      ...muiThemeOptions,
+      components: {
+        ...muiThemeOptions.components,
+        MuiTabs: {
+          ...tabsOptions,
+          styleOverrides: {
+            ...tabsOptions?.styleOverrides,
+            root: { minHeight: height.tab, borderBottom: `1px solid ${colors.border.subtle}` },
+            scroller: {},
+          },
+        },
+      },
+    });
+    expect(measure(old)).toEqual({ height: tab + 1, line, underline: { top: tab - bar, bottom: tab }, covered: false });
+
+    // 견본(.tabs 의 아래 선, .tab.on::after 의 bottom -1px)처럼 밑줄(43~45)이 선(44~45)을 덮는다. 넘치는 탭 줄
+    // (scrollable)도 scroller 가 같으므로 같다.
+    for (const props of [{}, { variant: 'scrollable' }]) {
+      expect(measure(undefined, props), JSON.stringify(props)).toEqual({
+        height: tab + 1,
+        line,
+        underline: { top: tab + 1 - bar, bottom: tab + 1 },
+        covered: true,
+      });
+    }
+
+    // 세로 탭에는 아래 선이 없고 scroller 아래 여백도 없다.
+    expect(measure(undefined, { orientation: 'vertical' })).toMatchObject({ height: tab, line: null });
+  });
+
   it('Slider 손잡이에 색 고리 그림자가 없고, 키보드 초점은 남색 테두리다', () => {
     const slider = (theme?: unknown) => {
       const html = render(mui, (m) => h(m.Slider, { defaultValue: 30 }), theme);

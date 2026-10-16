@@ -111,6 +111,14 @@ declare module '@mui/material/Button' {
 }
 
 const { levels } = typography;
+/**
+ * MUI 의 outlined 라벨 배치에서 온 구조 값이다. 디자인 값이 아니라서 tokens.ts 에 두지 않는다.
+ * 줄어든 라벨은 입력칸 위 테두리 선 위로 9 올라가고(MUI 기본), 테두리의 틈은 라벨보다 6 앞에서 시작한다
+ * (MUI 기본은 라벨 14, 틈 8 이다).
+ */
+const labelShrinkTop = '-9px';
+const notchLead = '6px';
+
 const onFill = colors.inverse.text.primary;
 const hairline = (color: string) => `1px solid ${color}`;
 
@@ -478,6 +486,30 @@ export const muiThemeOptions: ThemeOptions = {
     MuiTextField: { defaultProps: { size: 'small' } },
     MuiFormControl: { defaultProps: { size: 'small' } },
 
+    MuiInputLabel: {
+      styleOverrides: {
+        root: {
+          // 라벨 글자는 입력 글자(body)와 같다. 테두리에 비우는 틈(legend)은 입력 글자의 0.75배로 재고 라벨도 0.75배로
+          // 줄어드므로, 둘이 같은 글자여야 테두리 선이 라벨 끝을 가로지르지 않는다.
+          ...font('body'),
+          variants: [
+            {
+              // 입력칸 높이(40)의 가운데, 입력 글자와 같은 안쪽 여백(12)에 선다. size 와 상관없이 높이가 40 이라 하나로 둔다.
+              props: { variant: 'outlined' },
+              style: {
+                transform: `translate(${component.input.paddingX}, calc((${height.input} - ${levels.body.lineHeight}) / 2)) scale(1)`,
+              },
+            },
+            {
+              // 줄어든 라벨은 테두리 선 위에 선다.
+              props: { variant: 'outlined', shrink: true },
+              style: { transform: `translate(${component.input.paddingX}, ${labelShrinkTop}) scale(0.75)` },
+            },
+          ],
+        },
+      },
+    },
+
     MuiOutlinedInput: {
       styleOverrides: {
         root: ({ ownerState }) => ({
@@ -495,7 +527,11 @@ export const muiThemeOptions: ThemeOptions = {
           ...(ownerState.endAdornment
             ? { '--_trailingPad': component.input.paddingX, paddingRight: 'var(--_trailingPad)' }
             : {}),
-          '& .MuiOutlinedInput-notchedOutline': { borderColor: colors.border.control },
+          // 라벨을 입력 글자의 안쪽 여백으로 옮긴 만큼 테두리의 틈도 옮긴다.
+          '& .MuiOutlinedInput-notchedOutline': {
+            borderColor: colors.border.control,
+            padding: `0 calc(${component.input.paddingX} - ${notchLead})`,
+          },
           '&:hover:not(.Mui-focused):not(.Mui-error):not(.Mui-disabled) .MuiOutlinedInput-notchedOutline':
             { borderColor: colors.border.strong },
           '&.Mui-focused:not(.Mui-error) .MuiOutlinedInput-notchedOutline': {
@@ -516,9 +552,24 @@ export const muiThemeOptions: ThemeOptions = {
       },
     },
 
+    // 탭 줄 아래 선은 고른 탭의 밑줄이 덮는다(견본 .tabs 의 아래 선과 .tab.on::after 의 bottom -1px).
+    // 밑줄은 scroller 안 bottom 0 에 서고 scroller 는 overflow 를 숨기므로, 밑줄을 더 내리면 잘리고 뿌리의 border 는
+    // 덮지 못한다. 그래서 scroller 아래에 선 두께만큼 여백을 두어 밑줄을 선 자리까지 내리고, 선은 뿌리 안쪽 아래에
+    // 흐림 없는 그림자로 긋는다(면의 그림자가 아니라 선이다). 줄 높이는 탭 44 와 선 1 의 45 다.
+    // 선을 scroller 가 아니라 뿌리에 두어, 넘치는 탭 줄(scrollable)에서 scroller 옆에 서는 화살표 버튼 아래까지 잇는다.
+    // 마운트 전 첫 그림에서만 MUI 가 밑줄을 고른 탭 안에 그린다. 탭이 overflow 를 숨겨 그때는 밑줄이 선 위에 선다.
     MuiTabs: {
       styleOverrides: {
-        root: { minHeight: height.tab, borderBottom: hairline(colors.border.subtle) },
+        root: {
+          minHeight: height.tab,
+          // 세로 탭에는 아래 선과 여백을 두지 않는다. 세로 탭의 밑줄은 MUI 기본(오른쪽 세로 막대)이다.
+          variants: [
+            { props: { orientation: 'horizontal' }, style: { boxShadow: `inset 0 -1px 0 ${colors.border.subtle}` } },
+          ],
+        },
+        scroller: {
+          variants: [{ props: { orientation: 'horizontal' }, style: { paddingBottom: '1px' } }],
+        },
         list: { gap: component.tab.gap },
         indicator: ({ ownerState }) => ({
           // 밑줄은 탭 사이를 미끄러지지 않고 고른 탭으로 바로 옮겨 간다(꾸밈 움직임 금지).
@@ -645,7 +696,28 @@ export const muiThemeOptions: ThemeOptions = {
     },
 
     MuiSwitch: {
-      styleOverrides: { switchBase: insetFocusRing },
+      styleOverrides: {
+        // 켜진 바탕은 color="primary" 일 때만 정한다. color 를 주지 않은 스위치도 primary 다. 다른 color 는
+        // MUI 기본을 따라 그 color 의 main 을 opacity 0.5 로 칠한다.
+        // MUI 는 켜진 바탕을 switchBase 의 '.Mui-checked + .MuiSwitch-track' 으로 칠하므로 같은 선택자로 덮는다.
+        // color 를 주지 않고 sx 로 켜진 바탕의 색만 덮으면 여기의 opacity 1 은 그대로 받는다. 덮은 색이 손잡이와
+        // 같으면 손잡이가 바탕에 묻히므로 opacity 도 함께 덮는다.
+        switchBase: {
+          ...insetFocusRing,
+          variants: [
+            {
+              props: { color: 'primary' },
+              style: {
+                '&.Mui-checked + .MuiSwitch-track': { backgroundColor: component.switch.trackOn, opacity: 1 },
+              },
+            },
+          ],
+        },
+        // MUI 는 손잡이에 shadows[1] 을 쓰는데, 이 테마의 shadows[1] 은 카드 그림자라 흰 카드 위에서 손잡이가 사라진다.
+        thumb: { boxShadow: component.switch.thumbShadow },
+        // 꺼진 바탕. 꺼진 스위치(disabled)의 옅은 바탕은 MUI 의 '.Mui-disabled + .MuiSwitch-track' 이 더 높은 우선순위로 준다.
+        track: { backgroundColor: component.switch.trackOff, opacity: 1 },
+      },
     },
 
     // 그림자는 카드와 판 두 가지뿐이다. elevation 그림자는 위의 shadows 가 두 값으로 바꾸고,
